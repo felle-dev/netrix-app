@@ -68,14 +68,14 @@ class _HomeScreenState extends State<HomeScreen> {
   String get _currentTitle {
     switch (_navIndex) {
       case 0:
-        return 'Privacy';
+        return 'Network Matrix';
       // case 1:
       //   return 'App Tracker';
       // case 2:
       //   return 'Speed Test';
       default:
         // return 'Netrix';
-        return 'Privacy';
+        return 'Network Matrix';
     }
   }
 
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (_currentTitle == "Privacy") ...[
+                    if (_currentTitle == "Network Matrix") ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,

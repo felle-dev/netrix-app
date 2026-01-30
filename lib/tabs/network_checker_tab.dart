@@ -873,48 +873,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.errorContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.error.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded,
-                              color: theme.colorScheme.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Important Note',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'When running on web browsers, this app can only analyze what public IP services report. Some VPNs may not be detected if they don\'t identify themselves in the connection metadata. For most accurate detection, check the ISP field in "IP Location Details" - it should show your VPN provider\'s name.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.colorScheme.onErrorContainer,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: () => Navigator.pop(context),
@@ -1050,7 +1008,7 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
           _buildIPDetailsCard(),
           const SizedBox(height: 16),
           _buildLocalAddressesCard(),
-          const SizedBox(height: 0),
+          const SizedBox(height: 16),
           _buildConnectionStatus(),
           const SizedBox(height: 16),
           _buildPrivacyBanner(),
