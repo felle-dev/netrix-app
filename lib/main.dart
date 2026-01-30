@@ -69,12 +69,13 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (_navIndex) {
       case 0:
         return 'Privacy';
-      case 1:
-        return 'App Tracker';
-      case 2:
-        return 'Speed Test';
+      // case 1:
+      //   return 'App Tracker';
+      // case 2:
+      //   return 'Speed Test';
       default:
-        return 'Netrix';
+        // return 'Netrix';
+        return 'Privacy';
     }
   }
 
@@ -82,13 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _navIndex = index);
   }
 
-  void _onNavTapped(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
+  // void _onNavTapped(int index) {
+  //   _pageController.animateToPage(
+  //     index,
+  //     duration: const Duration(milliseconds: 300),
+  //     curve: Curves.easeInOut,
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -163,133 +164,133 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       extendBody: true,
-      bottomNavigationBar: CustomFloatingNavBar(
-        currentIndex: _navIndex,
-        onTap: _onNavTapped,
-      ),
+      // bottomNavigationBar: CustomFloatingNavBar(
+      //   currentIndex: _navIndex,
+      //   onTap: _onNavTapped,
+      // ),
     );
   }
 }
 
 // Custom Navigation Bar
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData selectedIcon;
-  final bool isSelected;
-  final VoidCallback onTap;
+// class _NavItem extends StatelessWidget {
+//   final IconData icon;
+//   final IconData selectedIcon;
+//   final bool isSelected;
+//   final VoidCallback onTap;
 
-  const _NavItem({
-    required this.icon,
-    required this.selectedIcon,
-    required this.isSelected,
-    required this.onTap,
-  });
+//   const _NavItem({
+//     required this.icon,
+//     required this.selectedIcon,
+//     required this.isSelected,
+//     required this.onTap,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primaryContainer.withOpacity(0.7)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (child, animation) {
-              return ScaleTransition(scale: animation, child: child);
-            },
-            child: Icon(
-              isSelected ? selectedIcon : icon,
-              key: ValueKey(isSelected),
-              color: isSelected
-                  ? theme.colorScheme.onPrimaryContainer
-                  : theme.colorScheme.onSurfaceVariant,
-              size: 24,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//     return Expanded(
+//       child: GestureDetector(
+//         onTap: onTap,
+//         behavior: HitTestBehavior.opaque,
+//         child: AnimatedContainer(
+//           duration: const Duration(milliseconds: 250),
+//           curve: Curves.easeInOut,
+//           padding: const EdgeInsets.all(12),
+//           decoration: BoxDecoration(
+//             color: isSelected
+//                 ? theme.colorScheme.primaryContainer.withOpacity(0.7)
+//                 : Colors.transparent,
+//             borderRadius: BorderRadius.circular(30),
+//           ),
+//           child: AnimatedSwitcher(
+//             duration: const Duration(milliseconds: 200),
+//             transitionBuilder: (child, animation) {
+//               return ScaleTransition(scale: animation, child: child);
+//             },
+//             child: Icon(
+//               isSelected ? selectedIcon : icon,
+//               key: ValueKey(isSelected),
+//               color: isSelected
+//                   ? theme.colorScheme.onPrimaryContainer
+//                   : theme.colorScheme.onSurfaceVariant,
+//               size: 24,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
-class CustomFloatingNavBar extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
+// class CustomFloatingNavBar extends StatelessWidget {
+//   final int currentIndex;
+//   final Function(int) onTap;
 
-  const CustomFloatingNavBar({
-    super.key,
-    required this.currentIndex,
-    required this.onTap,
-  });
+//   const CustomFloatingNavBar({
+//     super.key,
+//     required this.currentIndex,
+//     required this.onTap,
+//   });
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
 
-    return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(40),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(40),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(40),
-              border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.15),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.shield_outlined,
-                  selectedIcon: Icons.shield,
-                  isSelected: currentIndex == 0,
-                  onTap: () => onTap(0),
-                ),
-                _NavItem(
-                  icon: Icons.radar_outlined,
-                  selectedIcon: Icons.radar,
-                  isSelected: currentIndex == 1,
-                  onTap: () => onTap(1),
-                ),
-                _NavItem(
-                  icon: Icons.speed_outlined,
-                  selectedIcon: Icons.speed,
-                  isSelected: currentIndex == 2,
-                  onTap: () => onTap(2),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+//     return Container(
+//       margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
+//       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+//       decoration: BoxDecoration(
+//         borderRadius: BorderRadius.circular(40),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.03),
+//             blurRadius: 12,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       child: ClipRRect(
+//         borderRadius: BorderRadius.circular(40),
+//         child: BackdropFilter(
+//           filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+//           child: Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//             decoration: BoxDecoration(
+//               color: theme.colorScheme.surface.withOpacity(0.6),
+//               borderRadius: BorderRadius.circular(40),
+//               border: Border.all(
+//                 color: theme.colorScheme.outline.withOpacity(0.15),
+//                 width: 1,
+//               ),
+//             ),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceAround,
+//               children: [
+//                 _NavItem(
+//                   icon: Icons.shield_outlined,
+//                   selectedIcon: Icons.shield,
+//                   isSelected: currentIndex == 0,
+//                   onTap: () => onTap(0),
+//                 ),
+//                 _NavItem(
+//                   icon: Icons.radar_outlined,
+//                   selectedIcon: Icons.radar,
+//                   isSelected: currentIndex == 1,
+//                   onTap: () => onTap(1),
+//                 ),
+//                 _NavItem(
+//                   icon: Icons.speed_outlined,
+//                   selectedIcon: Icons.speed,
+//                   isSelected: currentIndex == 2,
+//                   onTap: () => onTap(2),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
