@@ -19,6 +19,7 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
   bool get wantKeepAlive => true;
 
   bool _isLoading = false;
+  bool _showFullIP = false;
   Map<String, dynamic>? _networkInfo;
   String? _errorMessage;
   int _currentProviderIndex = 0;
@@ -178,6 +179,7 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
           if (publicIP != null) {
             info['publicIP'] = publicIP;
             info['provider'] = provider.name;
+            info['providerUrl'] = provider.ipUrl;
             _currentProviderIndex =
                 (_currentProviderIndex + i) % _allProviders.length;
 
@@ -400,6 +402,169 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     );
   }
 
+  void _showPrivacyInfoDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 32,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                          0.4,
+                        ),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.privacy_tip_outlined,
+                        color: theme.colorScheme.primary,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Privacy & Transparency',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'What Data We Collect',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '• Your public IP address\n'
+                    '• Your local network interface addresses\n'
+                    '• IP geolocation data (country, region, city)\n'
+                    '• ISP information\n'
+                    '• DNS server addresses',
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'How We Use It',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '• All data is displayed to YOU only\n'
+                    '• Data is cached locally on your device\n'
+                    '• No data is sent to our servers\n'
+                    '• No tracking or analytics\n'
+                    '• No third-party data sharing',
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Third-Party Services',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'We use free, public IP lookup services to gather network information:\n\n'
+                    '• ipify.org\n'
+                    '• ipapi.co\n'
+                    '• ip-api.com\n'
+                    '• seeip.org\n'
+                    '• myip.com\n'
+                    '• ipgeolocation.io\n'
+                    '• ifconfig.me\n'
+                    '• torproject.org (Tor detection only)',
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiaryContainer.withOpacity(
+                        0.5,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.tertiary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: theme.colorScheme.tertiary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'These services may log your IP address according to their own privacy policies.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onTertiaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Your Control',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '• Data is only fetched when you manually refresh\n'
+                    '• You can add custom providers you trust\n'
+                    '• All requests are made directly from your device\n'
+                    '• You can clear cached data anytime',
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                    child: const Text('Got it'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // Required for AutomaticKeepAliveClientMixin
@@ -455,8 +620,10 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
           _buildIPDetailsCard(),
           const SizedBox(height: 16),
           _buildLocalAddressesCard(),
+          const SizedBox(height: 0),
+          _buildConnectionStatus(),
           const SizedBox(height: 16),
-          _buildPrivacyTipsCard(),
+          _buildPrivacyBanner(),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -495,14 +662,171 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     );
   }
 
+  Widget _buildPrivacyBanner() {
+    final theme = Theme.of(context);
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outline.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showPrivacyInfoDialog,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.privacy_tip_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Privacy & Transparency',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Your data stays on your device • Tap for details',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConnectionStatus() {
+    final theme = Theme.of(context);
+    final provider = _networkInfo?['provider'] ?? 'Unknown';
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Connection Information',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: theme.colorScheme.outlineVariant),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.5),
+                            blurRadius: 6,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Connected to ${provider.toUpperCase()}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Active connection established',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPrivacyScore() {
     final theme = Theme.of(context);
     final assessment =
         _networkInfo?['privacyAssessment'] as Map<String, dynamic>?;
     final score = assessment?['privacyScore'] ?? 0;
-    final usingVPN = assessment?['usingVPN'] ?? false;
-    final usingTor = assessment?['usingTor'] ?? false;
-    final provider = _networkInfo?['provider'] ?? 'Unknown';
+    // final usingVPN = assessment?['usingVPN'] ?? false;
+    // final usingTor = assessment?['usingTor'] ?? false;
 
     Color scoreColor;
     String scoreLabel;
@@ -542,25 +866,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    provider,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
               ],
@@ -606,56 +911,56 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: usingTor
-                        ? Colors.purple.withOpacity(0.1)
-                        : usingVPN
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        usingTor
-                            ? Icons.vpn_lock_rounded
-                            : usingVPN
-                            ? Icons.shield_rounded
-                            : Icons.shield_outlined,
-                        color: usingTor
-                            ? Colors.purple
-                            : usingVPN
-                            ? Colors.green
-                            : Colors.orange,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        usingTor
-                            ? 'Tor Network Detected'
-                            : usingVPN
-                            ? 'VPN Detected'
-                            : 'No VPN/Tor Detected',
-                        style: TextStyle(
-                          color: usingTor
-                              ? Colors.purple
-                              : usingVPN
-                              ? Colors.green
-                              : Colors.orange,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // const SizedBox(height: 24),
+                // Container(
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 16,
+                //     vertical: 12,
+                //   ),
+                //   decoration: BoxDecoration(
+                //     color: usingTor
+                //         ? Colors.purple.withOpacity(0.1)
+                //         : usingVPN
+                //         ? Colors.green.withOpacity(0.1)
+                //         : Colors.orange.withOpacity(0.1),
+                //     borderRadius: BorderRadius.circular(12),
+                //   ),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.center,
+                //     children: [
+                //       Icon(
+                //         usingTor
+                //             ? Icons.vpn_lock_rounded
+                //             : usingVPN
+                //             ? Icons.shield_rounded
+                //             : Icons.shield_outlined,
+                //         color: usingTor
+                //             ? Colors.purple
+                //             : usingVPN
+                //             ? Colors.green
+                //             : Colors.orange,
+                //         size: 20,
+                //       ),
+                //       const SizedBox(width: 8),
+                //       Text(
+                //         usingTor
+                //             ? 'Tor Network Detected'
+                //             : usingVPN
+                //             ? 'VPN Detected'
+                //             : 'No VPN/Tor Detected',
+                //         style: TextStyle(
+                //           color: usingTor
+                //               ? Colors.purple
+                //               : usingVPN
+                //               ? Colors.green
+                //               : Colors.orange,
+                //           fontWeight: FontWeight.w600,
+                //           fontSize: 15,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -668,59 +973,86 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     final theme = Theme.of(context);
     final publicIP = _networkInfo?['publicIP'] ?? 'Unknown';
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
-        borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.surface,
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.public_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Public IP Address',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
+    return StatefulBuilder(
+      builder: (context, setState) {
+        String getDisplayIP() {
+          if (publicIP == 'Unknown' || _showFullIP) {
+            return publicIP;
+          }
+          if (publicIP.length <= 8) {
+            return publicIP;
+          }
+          return '${publicIP.substring(0, 4)}***.${publicIP.substring(publicIP.length - 4)}';
+        }
+
+        return Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant,
+              width: 1,
             ),
+            borderRadius: BorderRadius.circular(16),
+            color: theme.colorScheme.surface,
           ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(0),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SelectableText(
-                      publicIP,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.public_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Public IP Address',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+              Divider(height: 1, color: theme.colorScheme.outlineVariant),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SelectableText(
+                        getDisplayIP(),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (publicIP != 'Unknown')
+                      IconButton(
+                        icon: Icon(
+                          _showFullIP ? Icons.visibility : Icons.visibility_off,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _showFullIP = !_showFullIP;
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -971,198 +1303,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                     ),
                   )
                   .toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPrivacyTipsCard() {
-    final theme = Theme.of(context);
-    final assessment =
-        _networkInfo?['privacyAssessment'] as Map<String, dynamic>?;
-    final warnings = assessment?['warnings'] as List? ?? [];
-    final tips = assessment?['tips'] as List? ?? [];
-
-    if (warnings.isEmpty && tips.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.green.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: Colors.green,
-              size: 28,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                'Your network privacy looks good!',
-                style: TextStyle(
-                  color: Colors.green[700],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
-        borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.surface,
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.warning_amber_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Privacy Recommendations',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (warnings.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline_rounded,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Warnings',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ...warnings.map(
-                          (warning) => Padding(
-                            padding: const EdgeInsets.only(left: 8.0, top: 6.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '• ',
-                                  style: TextStyle(color: Colors.orange[700]),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    warning,
-                                    style: TextStyle(color: Colors.orange[700]),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                if (tips.isNotEmpty) ...[
-                  if (warnings.isNotEmpty) const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.lightbulb_outline_rounded,
-                              color: theme.colorScheme.onPrimaryContainer,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Tips',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ...tips.map(
-                          (tip) => Padding(
-                            padding: const EdgeInsets.only(left: 8.0, top: 6.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '• ',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    tip,
-                                    style: TextStyle(
-                                      color:
-                                          theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
             ),
           ),
         ],
