@@ -613,8 +613,8 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _buildPrivacyScore(),
-          const SizedBox(height: 16),
+          // _buildPrivacyScore(),
+          // const SizedBox(height: 16),
           _buildPublicIPCard(),
           const SizedBox(height: 16),
           _buildIPDetailsCard(),
@@ -820,154 +820,154 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     );
   }
 
-  Widget _buildPrivacyScore() {
-    final theme = Theme.of(context);
-    final assessment =
-        _networkInfo?['privacyAssessment'] as Map<String, dynamic>?;
-    final score = assessment?['privacyScore'] ?? 0;
-    // final usingVPN = assessment?['usingVPN'] ?? false;
-    // final usingTor = assessment?['usingTor'] ?? false;
+  // Widget _buildPrivacyScore() {
+  //   final theme = Theme.of(context);
+  //   final assessment =
+  //       _networkInfo?['privacyAssessment'] as Map<String, dynamic>?;
+  //   final score = assessment?['privacyScore'] ?? 0;
+  //   // final usingVPN = assessment?['usingVPN'] ?? false;
+  //   // final usingTor = assessment?['usingTor'] ?? false;
 
-    Color scoreColor;
-    String scoreLabel;
+  //   Color scoreColor;
+  //   String scoreLabel;
 
-    if (score >= 80) {
-      scoreColor = Colors.green;
-      scoreLabel = 'Good';
-    } else if (score >= 50) {
-      scoreColor = Colors.orange;
-      scoreLabel = 'Fair';
-    } else {
-      scoreColor = Colors.red;
-      scoreLabel = 'Poor';
-    }
+  //   if (score >= 80) {
+  //     scoreColor = Colors.green;
+  //     scoreLabel = 'Good';
+  //   } else if (score >= 50) {
+  //     scoreColor = Colors.orange;
+  //     scoreLabel = 'Fair';
+  //   } else {
+  //     scoreColor = Colors.red;
+  //     scoreLabel = 'Poor';
+  //   }
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
-        borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.surface,
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.shield_outlined,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Privacy Score',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: CircularProgressIndicator(
-                        value: score / 100,
-                        strokeWidth: 12,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-                        strokeCap: StrokeCap.round,
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        Text(
-                          '$score',
-                          style: theme.textTheme.displayLarge?.copyWith(
-                            color: scoreColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          scoreLabel,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: scoreColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                // const SizedBox(height: 24),
-                // Container(
-                //   padding: const EdgeInsets.symmetric(
-                //     horizontal: 16,
-                //     vertical: 12,
-                //   ),
-                //   decoration: BoxDecoration(
-                //     color: usingTor
-                //         ? Colors.purple.withOpacity(0.1)
-                //         : usingVPN
-                //         ? Colors.green.withOpacity(0.1)
-                //         : Colors.orange.withOpacity(0.1),
-                //     borderRadius: BorderRadius.circular(12),
-                //   ),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.center,
-                //     children: [
-                //       Icon(
-                //         usingTor
-                //             ? Icons.vpn_lock_rounded
-                //             : usingVPN
-                //             ? Icons.shield_rounded
-                //             : Icons.shield_outlined,
-                //         color: usingTor
-                //             ? Colors.purple
-                //             : usingVPN
-                //             ? Colors.green
-                //             : Colors.orange,
-                //         size: 20,
-                //       ),
-                //       const SizedBox(width: 8),
-                //       Text(
-                //         usingTor
-                //             ? 'Tor Network Detected'
-                //             : usingVPN
-                //             ? 'VPN Detected'
-                //             : 'No VPN/Tor Detected',
-                //         style: TextStyle(
-                //           color: usingTor
-                //               ? Colors.purple
-                //               : usingVPN
-                //               ? Colors.green
-                //               : Colors.orange,
-                //           fontWeight: FontWeight.w600,
-                //           fontSize: 15,
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  //   return Container(
+  //     clipBehavior: Clip.antiAlias,
+  //     decoration: BoxDecoration(
+  //       border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
+  //       borderRadius: BorderRadius.circular(16),
+  //       color: theme.colorScheme.surface,
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Padding(
+  //           padding: const EdgeInsets.all(16),
+  //           child: Row(
+  //             children: [
+  //               Icon(
+  //                 Icons.shield_outlined,
+  //                 color: theme.colorScheme.primary,
+  //                 size: 20,
+  //               ),
+  //               const SizedBox(width: 8),
+  //               Text(
+  //                 'Privacy Score',
+  //                 style: theme.textTheme.titleSmall?.copyWith(
+  //                   fontWeight: FontWeight.bold,
+  //                   color: theme.colorScheme.primary,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         Divider(height: 1, color: theme.colorScheme.outlineVariant),
+  //         Padding(
+  //           padding: const EdgeInsets.all(24.0),
+  //           child: Column(
+  //             children: [
+  //               Stack(
+  //                 alignment: Alignment.center,
+  //                 children: [
+  //                   SizedBox(
+  //                     width: 140,
+  //                     height: 140,
+  //                     child: CircularProgressIndicator(
+  //                       value: score / 100,
+  //                       strokeWidth: 12,
+  //                       backgroundColor:
+  //                           theme.colorScheme.surfaceContainerHighest,
+  //                       valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+  //                       strokeCap: StrokeCap.round,
+  //                     ),
+  //                   ),
+  //                   Column(
+  //                     children: [
+  //                       Text(
+  //                         '$score',
+  //                         style: theme.textTheme.displayLarge?.copyWith(
+  //                           color: scoreColor,
+  //                           fontWeight: FontWeight.bold,
+  //                         ),
+  //                       ),
+  //                       Text(
+  //                         scoreLabel,
+  //                         style: theme.textTheme.titleMedium?.copyWith(
+  //                           color: scoreColor,
+  //                           fontWeight: FontWeight.w600,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ],
+  //               ),
+  //               // const SizedBox(height: 24),
+  //               // Container(
+  //               //   padding: const EdgeInsets.symmetric(
+  //               //     horizontal: 16,
+  //               //     vertical: 12,
+  //               //   ),
+  //               //   decoration: BoxDecoration(
+  //               //     color: usingTor
+  //               //         ? Colors.purple.withOpacity(0.1)
+  //               //         : usingVPN
+  //               //         ? Colors.green.withOpacity(0.1)
+  //               //         : Colors.orange.withOpacity(0.1),
+  //               //     borderRadius: BorderRadius.circular(12),
+  //               //   ),
+  //               //   child: Row(
+  //               //     mainAxisAlignment: MainAxisAlignment.center,
+  //               //     children: [
+  //               //       Icon(
+  //               //         usingTor
+  //               //             ? Icons.vpn_lock_rounded
+  //               //             : usingVPN
+  //               //             ? Icons.shield_rounded
+  //               //             : Icons.shield_outlined,
+  //               //         color: usingTor
+  //               //             ? Colors.purple
+  //               //             : usingVPN
+  //               //             ? Colors.green
+  //               //             : Colors.orange,
+  //               //         size: 20,
+  //               //       ),
+  //               //       const SizedBox(width: 8),
+  //               //       Text(
+  //               //         usingTor
+  //               //             ? 'Tor Network Detected'
+  //               //             : usingVPN
+  //               //             ? 'VPN Detected'
+  //               //             : 'No VPN/Tor Detected',
+  //               //         style: TextStyle(
+  //               //           color: usingTor
+  //               //               ? Colors.purple
+  //               //               : usingVPN
+  //               //               ? Colors.green
+  //               //               : Colors.orange,
+  //               //           fontWeight: FontWeight.w600,
+  //               //           fontSize: 15,
+  //               //         ),
+  //               //       ),
+  //               //     ],
+  //               //   ),
+  //               // ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildPublicIPCard() {
     final theme = Theme.of(context);
