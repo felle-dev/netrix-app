@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'tabs/network_checker_tab.dart';
-import 'tabs/app_tracker_tab.dart';
-import 'tabs/speed_test_tab.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -158,8 +156,8 @@ class _HomeScreenState extends State<HomeScreen> {
           onPageChanged: _onPageChanged,
           children: const [
             NetworkCheckerTab(),
-            AppTrackerTab(),
-            SpeedTestTab(),
+            // AppTrackerTab(),
+            // SpeedTestTab(),
           ],
         ),
       ),

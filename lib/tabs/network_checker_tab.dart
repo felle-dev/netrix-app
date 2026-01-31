@@ -22,99 +22,93 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
   bool _showFullIP = false;
   Map<String, dynamic>? _networkInfo;
   String? _errorMessage;
-  int _currentProviderIndex = 0;
-  List<IPProvider> _customProviders = [];
+  int _selectedProviderIndex = 0;
+  List<IPProvider> _providers = [];
 
-  // Multiple free IP checker providers
-  final List<IPProvider> _defaultProviders = [
-    IPProvider(
-      name: 'ipify',
-      ipUrl: 'https://api.ipify.org?format=json',
-      detailsUrl: 'https://ipapi.co/{ip}/json/',
-      ipJsonKey: 'ip',
-    ),
-    IPProvider(
-      name: 'ipapi',
-      ipUrl: 'https://ipapi.co/json/',
-      detailsUrl: '',
-      ipJsonKey: 'ip',
-    ),
-    IPProvider(
-      name: 'ip-api',
-      ipUrl: 'http://ip-api.com/json/',
-      detailsUrl: '',
-      ipJsonKey: 'query',
-    ),
-    IPProvider(
-      name: 'seeip',
-      ipUrl: 'https://api.seeip.org/jsonip',
-      detailsUrl: 'https://ipapi.co/{ip}/json/',
-      ipJsonKey: 'ip',
-    ),
-    IPProvider(
-      name: 'myip',
-      ipUrl: 'https://api.myip.com',
-      detailsUrl: 'https://ipapi.co/{ip}/json/',
-      ipJsonKey: 'ip',
-    ),
-    IPProvider(
-      name: 'ipgeolocation',
-      ipUrl: 'https://api.ipgeolocation.io/getip',
-      detailsUrl: 'https://ipapi.co/{ip}/json/',
-      ipJsonKey: 'ip',
-    ),
-    IPProvider(
-      name: 'ifconfig',
-      ipUrl: 'https://ifconfig.me/all.json',
-      detailsUrl: 'https://ipapi.co/{ip}/json/',
-      ipJsonKey: 'ip_addr',
-    ),
-  ];
-
-  List<IPProvider> get _allProviders => [
-    ..._defaultProviders,
-    ..._customProviders,
-  ];
+  List<IPProvider> get _allProviders => _providers;
 
   @override
   void initState() {
     super.initState();
-    _loadCachedData();
+    _loadProviders();
   }
 
-  Future<void> _loadCachedData() async {
+  List<IPProvider> _getDefaultProviders() {
+    return [
+      // IPProvider(
+      //   name: 'ipify',
+      //   ipUrl: 'https://api.ipify.org?format=json',
+      //   detailsUrl: 'https://ipapi.co/{ip}/json/',
+      //   ipJsonKey: 'ip',
+      // ),
+      // IPProvider(
+      //   name: 'ipapi',
+      //   ipUrl: 'https://ipapi.co/json/',
+      //   detailsUrl: '',
+      //   ipJsonKey: 'ip',
+      // ),
+      IPProvider(
+        name: 'ip-api',
+        ipUrl: 'http://ip-api.com/json/',
+        detailsUrl: '',
+        ipJsonKey: 'query',
+      ),
+      // IPProvider(
+      //   name: 'seeip',
+      //   ipUrl: 'https://api.seeip.org/jsonip',
+      //   detailsUrl: 'https://ipapi.co/{ip}/json/',
+      //   ipJsonKey: 'ip',
+      // ),
+      // IPProvider(
+      //   name: 'myip',
+      //   ipUrl: 'https://api.myip.com',
+      //   detailsUrl: 'https://ipapi.co/{ip}/json/',
+      //   ipJsonKey: 'ip',
+      // ),
+      // IPProvider(
+      //   name: 'ipgeolocation',
+      //   ipUrl: 'https://api.ipgeolocation.io/getip',
+      //   detailsUrl: 'https://ipapi.co/{ip}/json/',
+      //   ipJsonKey: 'ip',
+      // ),
+      // IPProvider(
+      //   name: 'ifconfig',
+      //   ipUrl: 'https://ifconfig.me/all.json',
+      //   detailsUrl: 'https://ipapi.co/{ip}/json/',
+      //   ipJsonKey: 'ip_addr',
+      // ),
+    ];
+  }
+
+  Future<void> _loadProviders() async {
     final prefs = await SharedPreferences.getInstance();
-    final cachedData = prefs.getString('network_info');
-    final customProvidersJson = prefs.getString('custom_providers');
+    final providersJson = prefs.getString('providers');
 
-    if (customProvidersJson != null) {
-      final List<dynamic> decoded = json.decode(customProvidersJson);
+    if (providersJson != null) {
+      final List<dynamic> decoded = json.decode(providersJson);
       setState(() {
-        _customProviders = decoded.map((e) => IPProvider.fromJson(e)).toList();
-      });
-    }
-
-    if (cachedData != null) {
-      setState(() {
-        _networkInfo = json.decode(cachedData);
-        _isLoading = false;
+        _providers = decoded.map((e) => IPProvider.fromJson(e)).toList();
+        _selectedProviderIndex = prefs.getInt('selected_provider_index') ?? 0;
+        if (_selectedProviderIndex >= _providers.length) {
+          _selectedProviderIndex = 0;
+        }
       });
     } else {
-      _checkNetwork();
+      // Initialize with default providers
+      setState(() {
+        _providers = _getDefaultProviders();
+      });
+      await _saveProviders();
     }
+
+    _checkNetwork();
   }
 
-  Future<void> _saveCachedData(Map<String, dynamic> data) async {
+  Future<void> _saveProviders() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('network_info', json.encode(data));
-  }
-
-  Future<void> _saveCustomProviders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded = json.encode(
-      _customProviders.map((e) => e.toJson()).toList(),
-    );
-    await prefs.setString('custom_providers', encoded);
+    final encoded = json.encode(_providers.map((e) => e.toJson()).toList());
+    await prefs.setString('providers', encoded);
+    await prefs.setInt('selected_provider_index', _selectedProviderIndex);
   }
 
   Future<void> _checkNetwork() async {
@@ -125,7 +119,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
 
     try {
       final info = await _gatherNetworkInfo();
-      await _saveCachedData(info);
       setState(() {
         _networkInfo = info;
         _isLoading = false;
@@ -162,40 +155,34 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
       info['localAddresses'] = 'Error: $e';
     }
 
-    // Get public IP information with fallback providers
+    // Get public IP information using selected provider
     String? publicIP;
-    for (int i = 0; i < _allProviders.length; i++) {
-      try {
-        final provider =
-            _allProviders[(_currentProviderIndex + i) % _allProviders.length];
-        final response = await http
-            .get(Uri.parse(provider.ipUrl))
-            .timeout(const Duration(seconds: 5));
+    try {
+      final provider = _allProviders[_selectedProviderIndex];
+      final response = await http
+          .get(Uri.parse(provider.ipUrl))
+          .timeout(const Duration(seconds: 10));
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          publicIP = data[provider.ipJsonKey];
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        publicIP = data[provider.ipJsonKey];
 
-          if (publicIP != null) {
-            info['publicIP'] = publicIP;
-            info['provider'] = provider.name;
-            info['providerUrl'] = provider.ipUrl;
-            _currentProviderIndex =
-                (_currentProviderIndex + i) % _allProviders.length;
+        if (publicIP != null) {
+          info['publicIP'] = publicIP;
+          info['provider'] = provider.name;
+          info['providerUrl'] = provider.ipUrl;
 
-            // Get detailed IP information
-            await _getIPDetails(publicIP, info, provider);
-            break;
-          }
+          // Get detailed IP information
+          await _getIPDetails(publicIP, info, provider);
         }
-      } catch (e) {
-        // Continue to next provider
-        continue;
       }
+    } catch (e) {
+      info['publicIP'] =
+          'Unable to fetch from ${_allProviders[_selectedProviderIndex].name}: $e';
     }
 
     if (publicIP == null) {
-      info['publicIP'] = 'Unable to fetch from any provider';
+      info['publicIP'] = 'Unable to fetch from selected provider';
     }
 
     // Check DNS leak
@@ -554,400 +541,56 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
   }
 
   void _showProviderSettingsDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _ProviderSettingsSheet(
-        customProviders: _customProviders,
-        defaultProviders: _defaultProviders,
-        onAddProvider: (provider) {
-          setState(() {
-            _customProviders.add(provider);
-          });
-          _saveCustomProviders();
-        },
-        onDeleteProvider: (index) {
-          setState(() {
-            _customProviders.removeAt(index);
-          });
-          _saveCustomProviders();
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _ProviderSettingsPage(
+          providers: _providers,
+          selectedProviderIndex: _selectedProviderIndex,
+          onSelectProvider: (index) async {
+            setState(() {
+              _selectedProviderIndex = index;
+            });
+            await _saveProviders();
+            _checkNetwork();
+          },
+          onAddProvider: (provider) async {
+            setState(() {
+              _providers.add(provider);
+            });
+            await _saveProviders();
+          },
+          onDeleteProvider: (index) async {
+            if (_providers.length <= 1) {
+              return false;
+            }
+
+            setState(() {
+              _providers.removeAt(index);
+              if (_selectedProviderIndex >= _providers.length) {
+                _selectedProviderIndex = _providers.length - 1;
+              }
+            });
+            await _saveProviders();
+            return true;
+          },
+          onResetToDefaults: () async {
+            setState(() {
+              _providers = _getDefaultProviders();
+              _selectedProviderIndex = 0;
+            });
+            await _saveProviders();
+            _checkNetwork();
+          },
+        ),
       ),
     );
   }
 
   void _showPrivacyInfoDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 32,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                          0.4,
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.privacy_tip_outlined,
-                        color: theme.colorScheme.primary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Privacy & Transparency',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'What Data We Collect',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• Your public IP address\n'
-                    '• Your local network interface addresses\n'
-                    '• IP geolocation data (country, region, city)\n'
-                    '• ISP information\n'
-                    '• DNS server addresses',
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'How We Use It',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• All data is displayed to YOU only\n'
-                    '• Data is cached locally on your device\n'
-                    '• No data is sent to our servers\n'
-                    '• No tracking or analytics\n'
-                    '• No third-party data sharing',
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Third-Party Services',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'We use free, public IP lookup services to gather network information:\n\n'
-                    '• ipify.org\n'
-                    '• ipapi.co\n'
-                    '• ip-api.com\n'
-                    '• seeip.org\n'
-                    '• myip.com\n'
-                    '• ipgeolocation.io\n'
-                    '• ifconfig.me\n'
-                    '• torproject.org (Tor detection only)',
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiaryContainer.withOpacity(
-                        0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.tertiary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: theme.colorScheme.tertiary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'These services may log your IP address according to their own privacy policies.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: theme.colorScheme.onTertiaryContainer,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Your Control',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• Data is only fetched when you manually refresh\n'
-                    '• You can add custom providers you trust\n'
-                    '• All requests are made directly from your device\n'
-                    '• You can clear cached data anytime',
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('Got it'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showPrivacyScoreDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 32,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                          0.4,
-                        ),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.help_outline_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Privacy Score Explained',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'How Your Score is Calculated',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildScoreExplanationRow(
-                    theme,
-                    '100/100',
-                    'Tor Network',
-                    Colors.purple,
-                    'Maximum anonymity. Your connection is routed through multiple encrypted relays, making it extremely difficult to trace.',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildScoreExplanationRow(
-                    theme,
-                    '85/100',
-                    'VPN Active',
-                    Colors.blue,
-                    'Good privacy. Your real IP is hidden behind a VPN server. Choose reputable VPN providers for best protection.',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildScoreExplanationRow(
-                    theme,
-                    '0-80/100',
-                    'Direct Connection',
-                    Colors.red,
-                    'Your real IP is exposed. Websites can see your location and ISP. Score decreases with privacy issues like IPv6 leaks.',
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withOpacity(
-                        0.3,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.primary.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: theme.colorScheme.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Detection Method',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'We detect VPNs and Tor by analyzing:\n'
-                          '• ISP and organization names\n'
-                          '• Known VPN provider patterns (ProtonVPN, NordVPN, etc.)\n'
-                          '• Hosting/datacenter identifiers\n'
-                          '• Autonomous System Numbers (ASNs)\n'
-                          '• Tor Project official API',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('Got it'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildScoreExplanationRow(
-    ThemeData theme,
-    String score,
-    String label,
-    Color color,
-    String description,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              score,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const _PrivacyInfoPage()),
     );
   }
 
@@ -1000,10 +643,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
         padding: const EdgeInsets.all(20),
         children: [
           _buildIPLocationFocusCard(),
-          const SizedBox(height: 16),
-          _buildPrivacyAssessmentCard(),
-          const SizedBox(height: 16),
-          _buildPublicIPCard(),
           const SizedBox(height: 16),
           _buildIPDetailsCard(),
           const SizedBox(height: 16),
@@ -1124,42 +763,114 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     final details = _networkInfo?['ipDetails'];
     final publicIP = _networkInfo?['publicIP'] ?? 'Unknown';
 
+    // Debug information
+    final hasNetworkInfo = _networkInfo != null;
+    final detailsType = details?.runtimeType.toString() ?? 'null';
+    final isDetailsMap = details is Map;
+
     if (details is! Map) {
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          color: theme.colorScheme.surfaceContainerHighest,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_off_rounded,
-                    color: theme.colorScheme.onSurfaceVariant,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Location Information',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+      return GestureDetector(
+        onTap: () => _showDebugInfoDialog(),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: theme.colorScheme.errorContainer.withOpacity(0.3),
+            border: Border.all(
+              color: theme.colorScheme.error.withOpacity(0.5),
+              width: 2,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.bug_report_rounded,
+                      color: theme.colorScheme.error,
+                      size: 28,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Not Available',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Location Information',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: theme.colorScheme.error,
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  'Not Available',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Debug Information:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildDebugRow(
+                        theme,
+                        'Network Info',
+                        hasNetworkInfo ? '✓ Available' : '✗ Missing',
+                      ),
+                      _buildDebugRow(theme, 'Public IP', publicIP),
+                      _buildDebugRow(theme, 'Details Type', detailsType),
+                      _buildDebugRow(theme, 'Is Map', isDetailsMap.toString()),
+                      if (_networkInfo != null) ...[
+                        _buildDebugRow(
+                          theme,
+                          'Provider',
+                          _networkInfo!['provider']?.toString() ?? 'null',
+                        ),
+                        _buildDebugRow(
+                          theme,
+                          'Provider URL',
+                          _networkInfo!['providerUrl']?.toString() ?? 'null',
+                        ),
+                      ],
+                      if (_errorMessage != null)
+                        _buildDebugRow(theme, 'Error', _errorMessage!),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Tap for full debug details',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -1174,19 +885,9 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isTor
-                ? [
-                    Colors.purple.withOpacity(0.3),
-                    Colors.deepPurple.withOpacity(0.2),
-                  ]
-                : [
-                    theme.colorScheme.primaryContainer.withOpacity(0.8),
-                    theme.colorScheme.tertiaryContainer.withOpacity(0.6),
-                  ],
-          ),
+          color: isTor
+              ? Colors.purple.withOpacity(0.15)
+              : theme.colorScheme.primaryContainer.withOpacity(0.5),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -1408,571 +1109,46 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
   }
 
   void _showLocationExplanationDialog() {
-    final theme = Theme.of(context);
     final details = _networkInfo?['ipDetails'];
-    final publicIP = _networkInfo?['publicIP'] ?? 'Unknown';
-
     if (details is! Map) return;
 
-    final country = details['country'] ?? 'Unknown';
-    final region = details['region'] ?? 'Unknown';
-    final city = details['city'] ?? 'Unknown';
-    final isp = details['isp'] ?? 'Unknown';
-    final timezone = details['timezone'] ?? 'Unknown';
-    final isTor = details['isTor'] == true;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 32,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                        0.4,
-                      ),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Text(
-                      _getCountryFlag(country),
-                      style: const TextStyle(fontSize: 32),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isTor ? 'Tor Exit Node Details' : 'Location Details',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildLocationDetailRow(
-                  theme,
-                  Icons.public_rounded,
-                  'IP Address',
-                  publicIP,
-                  theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                _buildLocationDetailRow(
-                  theme,
-                  Icons.flag_rounded,
-                  'Country',
-                  country,
-                  Colors.blue,
-                ),
-                if (region != 'Unknown') ...[
-                  const SizedBox(height: 16),
-                  _buildLocationDetailRow(
-                    theme,
-                    Icons.map_rounded,
-                    'Region',
-                    region,
-                    Colors.teal,
-                  ),
-                ],
-                if (city != 'Unknown') ...[
-                  const SizedBox(height: 16),
-                  _buildLocationDetailRow(
-                    theme,
-                    Icons.location_city_rounded,
-                    'City',
-                    city,
-                    Colors.orange,
-                  ),
-                ],
-                const SizedBox(height: 16),
-                _buildLocationDetailRow(
-                  theme,
-                  Icons.business_rounded,
-                  'ISP',
-                  isp,
-                  Colors.purple,
-                ),
-                if (timezone != 'Unknown') ...[
-                  const SizedBox(height: 16),
-                  _buildLocationDetailRow(
-                    theme,
-                    Icons.access_time_rounded,
-                    'Timezone',
-                    timezone,
-                    Colors.green,
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'What is this?',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        isTor
-                            ? 'This shows the location of the Tor exit node that websites see, not your real location. Your actual location is hidden and protected by the Tor network.'
-                            : 'This is the location associated with your public IP address. Websites you visit can see this information, which is why using a VPN or Tor is recommended for privacy.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.tertiaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: theme.colorScheme.tertiary.withOpacity(0.2),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.devices_rounded,
-                            color: theme.colorScheme.tertiary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Local vs Public Address',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: theme.colorScheme.tertiary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
-                          children: [
-                            TextSpan(
-                              text: 'Public IP: ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.tertiary,
-                              ),
-                            ),
-                            const TextSpan(
-                              text:
-                                  'Visible to websites and services on the internet. Used for geolocation and identification.\n\n',
-                            ),
-                            TextSpan(
-                              text: 'Local Address: ',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.tertiary,
-                              ),
-                            ),
-                            const TextSpan(
-                              text:
-                                  'Private IP used only within your home/office network. Not visible to the internet (e.g., 192.168.x.x, 10.0.x.x).',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: const Text('Got it'),
-                ),
-              ],
-            ),
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _LocationDetailsPage(
+          details: Map<String, dynamic>.from(details),
+          publicIP: _networkInfo?['publicIP'] ?? 'Unknown',
         ),
       ),
     );
   }
 
-  Widget _buildLocationDetailRow(
-    ThemeData theme,
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrivacyAssessmentCard() {
-    final theme = Theme.of(context);
-    final assessment = _networkInfo?['privacyAssessment'];
-
-    if (assessment is! Map) {
-      return const SizedBox.shrink();
-    }
-
-    final isTor = assessment['usingTor'] == true;
-    final isVPN = assessment['usingVPN'] == true;
-    final privacyScore = assessment['privacyScore'] ?? 0;
-    final warnings = assessment['warnings'] as List? ?? [];
-    final tips = assessment['tips'] as List? ?? [];
-    final detectionMethod = assessment['detectionMethod'];
-
-    Color scoreColor;
-    IconData scoreIcon;
-    String scoreLabel;
-
-    if (privacyScore >= 85) {
-      scoreColor = Colors.green;
-      scoreIcon = Icons.verified_user_rounded;
-      scoreLabel = 'Excellent';
-    } else if (privacyScore >= 60) {
-      scoreColor = Colors.orange;
-      scoreIcon = Icons.shield_rounded;
-      scoreLabel = 'Good';
-    } else {
-      scoreColor = Colors.red;
-      scoreIcon = Icons.warning_rounded;
-      scoreLabel = 'Exposed';
-    }
-
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
-        borderRadius: BorderRadius.circular(16),
-        color: theme.colorScheme.surface,
-      ),
-      child: Column(
+  Widget _buildDebugRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.security_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Privacy Assessment',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const Spacer(),
-                InkWell(
-                  onTap: _showPrivacyScoreDialog,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.help_outline_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ],
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurfaceVariant,
+                fontFamily: 'monospace',
+              ),
             ),
           ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // Privacy Score
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: scoreColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: scoreColor.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: Icon(scoreIcon, color: scoreColor, size: 32),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Privacy Score',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Text(
-                                '$privacyScore',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: scoreColor,
-                                ),
-                              ),
-                              Text(
-                                '/100',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: scoreColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  scoreLabel,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: scoreColor,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                // Protection Status
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isTor
-                        ? Colors.purple.withOpacity(0.1)
-                        : isVPN
-                        ? Colors.blue.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isTor
-                          ? Colors.purple.withOpacity(0.3)
-                          : isVPN
-                          ? Colors.blue.withOpacity(0.3)
-                          : Colors.red.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isTor
-                            ? Icons.vpn_lock_rounded
-                            : isVPN
-                            ? Icons.vpn_key_rounded
-                            : Icons.warning_amber_rounded,
-                        color: isTor
-                            ? Colors.purple
-                            : isVPN
-                            ? Colors.blue
-                            : Colors.red,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isTor
-                                  ? 'Tor Network Active'
-                                  : isVPN
-                                  ? 'VPN Connection Detected'
-                                  : 'Direct Connection',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: isTor
-                                    ? Colors.purple
-                                    : isVPN
-                                    ? Colors.blue
-                                    : Colors.red,
-                              ),
-                            ),
-                            if (detectionMethod != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                detectionMethod,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (warnings.isNotEmpty || tips.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  if (warnings.isNotEmpty)
-                    ...warnings.map(
-                      (warning) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.warning_amber_rounded,
-                              size: 16,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                warning,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (tips.isNotEmpty)
-                    ...tips.map(
-                      (tip) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.lightbulb_outline_rounded,
-                              size: 16,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                tip,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ],
+          Expanded(
+            child: SelectableText(
+              value,
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurface,
+                fontFamily: 'monospace',
+              ),
             ),
           ),
         ],
@@ -1980,9 +1156,25 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     );
   }
 
+  void _showDebugInfoDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _DebugInfoPage(
+          networkInfo: _networkInfo,
+          selectedProviderIndex: _selectedProviderIndex,
+          allProviders: _allProviders,
+          isLoading: _isLoading,
+          errorMessage: _errorMessage,
+        ),
+      ),
+    );
+  }
+
   Widget _buildConnectionStatus() {
     final theme = Theme.of(context);
-    final provider = _networkInfo?['provider'] ?? 'Unknown';
+    final provider =
+        _networkInfo?['provider'] ?? _allProviders[_selectedProviderIndex].name;
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -2024,11 +1216,17 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: _networkInfo != null
+                            ? Colors.green
+                            : Colors.orange,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.green.withOpacity(0.5),
+                            color:
+                                (_networkInfo != null
+                                        ? Colors.green
+                                        : Colors.orange)
+                                    .withOpacity(0.5),
                             blurRadius: 6,
                             spreadRadius: 2,
                           ),
@@ -2041,7 +1239,7 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Connected to ${provider.toUpperCase()}',
+                            'Using ${provider.toUpperCase()}',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -2050,7 +1248,9 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Active connection established',
+                            _networkInfo != null
+                                ? 'Active connection established'
+                                : 'Tap Providers to change',
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.colorScheme.onSurfaceVariant,
@@ -2066,93 +1266,6 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildPublicIPCard() {
-    final theme = Theme.of(context);
-    final publicIP = _networkInfo?['publicIP'] ?? 'Unknown';
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        String getDisplayIP() {
-          if (publicIP == 'Unknown' || _showFullIP) {
-            return publicIP;
-          }
-          if (publicIP.length <= 8) {
-            return publicIP;
-          }
-          return '${publicIP.substring(0, 4)}***.${publicIP.substring(publicIP.length - 4)}';
-        }
-
-        return Container(
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant,
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            color: theme.colorScheme.surface,
-          ),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.public_rounded,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Public IP Address',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: theme.colorScheme.outlineVariant),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SelectableText(
-                        getDisplayIP(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    if (publicIP != 'Unknown')
-                      IconButton(
-                        icon: Icon(
-                          _showFullIP ? Icons.visibility : Icons.visibility_off,
-                          size: 20,
-                          color: theme.colorScheme.primary,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _showFullIP = !_showFullIP;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -2364,6 +1477,19 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
                     color: theme.colorScheme.primary,
                   ),
                 ),
+                const Spacer(),
+                InkWell(
+                  onTap: _showLocalAddressExplanationDialog,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.help_outline_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -2406,31 +1532,54 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
       ),
     );
   }
+
+  void _showLocalAddressExplanationDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const _LocalAddressExplanationPage(),
+      ),
+    );
+  }
 }
 
-// Provider Settings Sheet
-class _ProviderSettingsSheet extends StatefulWidget {
-  final List<IPProvider> customProviders;
-  final List<IPProvider> defaultProviders;
+// Provider Settings Page (was bottom sheet)
+class _ProviderSettingsPage extends StatefulWidget {
+  final List<IPProvider> providers;
+  final int selectedProviderIndex;
+  final Function(int) onSelectProvider;
   final Function(IPProvider) onAddProvider;
-  final Function(int) onDeleteProvider;
+  final Future<bool> Function(int) onDeleteProvider;
+  final Function() onResetToDefaults;
 
-  const _ProviderSettingsSheet({
-    required this.customProviders,
-    required this.defaultProviders,
+  const _ProviderSettingsPage({
+    required this.providers,
+    required this.selectedProviderIndex,
+    required this.onSelectProvider,
     required this.onAddProvider,
     required this.onDeleteProvider,
+    required this.onResetToDefaults,
   });
 
   @override
-  State<_ProviderSettingsSheet> createState() => _ProviderSettingsSheetState();
+  State<_ProviderSettingsPage> createState() => _ProviderSettingsPageState();
 }
 
-class _ProviderSettingsSheetState extends State<_ProviderSettingsSheet> {
+class _ProviderSettingsPageState extends State<_ProviderSettingsPage> {
   final _nameController = TextEditingController();
   final _ipUrlController = TextEditingController();
   final _detailsUrlController = TextEditingController();
   final _jsonKeyController = TextEditingController();
+
+  late List<IPProvider> _providers;
+  late int _selectedIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _providers = List.from(widget.providers);
+    _selectedIndex = widget.selectedProviderIndex;
+  }
 
   @override
   void dispose() {
@@ -2494,22 +1643,62 @@ class _ProviderSettingsSheetState extends State<_ProviderSettingsSheet> {
               if (_nameController.text.isNotEmpty &&
                   _ipUrlController.text.isNotEmpty &&
                   _jsonKeyController.text.isNotEmpty) {
-                widget.onAddProvider(
-                  IPProvider(
-                    name: _nameController.text,
-                    ipUrl: _ipUrlController.text,
-                    detailsUrl: _detailsUrlController.text,
-                    ipJsonKey: _jsonKeyController.text,
-                  ),
+                final provider = IPProvider(
+                  name: _nameController.text,
+                  ipUrl: _ipUrlController.text,
+                  detailsUrl: _detailsUrlController.text,
+                  ipJsonKey: _jsonKeyController.text,
                 );
+
+                widget.onAddProvider(provider);
+                setState(() {
+                  _providers.add(provider);
+                });
+
                 _nameController.clear();
                 _ipUrlController.clear();
                 _detailsUrlController.clear();
                 _jsonKeyController.clear();
                 Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Provider added successfully'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               }
             },
             child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResetConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset to Defaults'),
+        content: const Text(
+          'This will restore all default providers and remove any custom providers you\'ve added. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              widget.onResetToDefaults();
+              Navigator.pop(context); // Close the settings page
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Reset'),
           ),
         ],
       ),
@@ -2520,117 +1709,1072 @@ class _ProviderSettingsSheetState extends State<_ProviderSettingsSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('IP Provider Settings'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.restore),
+            tooltip: 'Reset to defaults',
+            onPressed: _showResetConfirmDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Add provider',
+            onPressed: _showAddProviderDialog,
+          ),
+        ],
       ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 32,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Text(
-                'IP Provider Settings',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Default Providers',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...widget.defaultProviders.map(
-                (provider) => ListTile(
-                  leading: Icon(
-                    Icons.check_circle,
-                    color: theme.colorScheme.primary,
-                  ),
-                  title: Text(provider.name),
-                  subtitle: Text(provider.ipUrl),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Text(
-                    'Custom Providers',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'Select which provider to use for checking your IP',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          if (_providers.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.dns_outlined,
+                      size: 64,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: _showAddProviderDialog,
-                    icon: const Icon(Icons.add_circle_outline),
-                    tooltip: 'Add Provider',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (widget.customProviders.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: Text(
-                      'No custom providers added',
+                    const SizedBox(height: 16),
+                    Text(
+                      'No providers available',
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap the + button to add a provider',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ..._providers.asMap().entries.map((entry) {
+              final index = entry.key;
+              final provider = entry.value;
+              final isSelected = _selectedIndex == index;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = index;
+                      });
+                      widget.onSelectProvider(index);
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? theme.colorScheme.primaryContainer
+                            : theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  provider.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  provider.ipUrl,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: theme.colorScheme.error,
+                            ),
+                            onPressed: () async {
+                              final deleted = await widget.onDeleteProvider(
+                                index,
+                              );
+                              if (!deleted && mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Cannot delete the last provider',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              } else if (mounted) {
+                                setState(() {
+                                  _providers.removeAt(index);
+                                  if (_selectedIndex >= _providers.length) {
+                                    _selectedIndex = _providers.length - 1;
+                                  }
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Provider deleted'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                )
-              else
-                ...widget.customProviders.asMap().entries.map(
-                  (entry) => ListTile(
-                    leading: Icon(
-                      Icons.cloud_outlined,
-                      color: theme.colorScheme.secondary,
+                ),
+              );
+            }),
+
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.tertiary.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: theme.colorScheme.tertiary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Select a provider and the app will use it for all checks. You can delete any provider except the last one.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onTertiaryContainer,
                     ),
-                    title: Text(entry.value.name),
-                    subtitle: Text(entry.value.ipUrl),
-                    trailing: IconButton(
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: theme.colorScheme.error,
-                      ),
-                      onPressed: () => widget.onDeleteProvider(entry.key),
-                    ),
-                    contentPadding: EdgeInsets.zero,
                   ),
                 ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Privacy Info Page (was bottom sheet)
+class _PrivacyInfoPage extends StatelessWidget {
+  const _PrivacyInfoPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Privacy & Transparency')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text(
+            'What Data We Collect',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '• Your public IP address\n'
+            '• Your local network interface addresses\n'
+            '• IP geolocation data (country, region, city)\n'
+            '• ISP information\n'
+            '• DNS server addresses',
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'How We Use It',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '• All data is displayed to YOU only\n'
+            '• Data is cached locally on your device\n'
+            '• No data is sent to our servers\n'
+            '• No tracking or analytics\n'
+            '• No third-party data sharing',
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Your Control',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '• Data is only fetched when you manually refresh\n'
+            '• You can add custom providers you trust\n'
+            '• All requests are made directly from your device\n'
+            '• You can clear cached data anytime',
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationDetailsPage extends StatelessWidget {
+  final Map<String, dynamic> details;
+  final String publicIP;
+
+  const _LocationDetailsPage({required this.details, required this.publicIP});
+
+  Widget _buildLocationDetailRow(
+    ThemeData theme,
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
                 ),
-                child: const Text('Done'),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final country = details['country'] ?? 'Unknown';
+    final region = details['region'] ?? 'Unknown';
+    final city = details['city'] ?? 'Unknown';
+    final isp = details['isp'] ?? 'Unknown';
+    final timezone = details['timezone'] ?? 'Unknown';
+    final isTor = details['isTor'] == true;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(isTor ? 'Tor Exit Node Details' : 'Location Details'),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _buildLocationDetailRow(
+            theme,
+            Icons.public_rounded,
+            'IP Address',
+            publicIP,
+            theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          _buildLocationDetailRow(
+            theme,
+            Icons.flag_rounded,
+            'Country',
+            country,
+            Colors.blue,
+          ),
+          if (region != 'Unknown') ...[
+            const SizedBox(height: 16),
+            _buildLocationDetailRow(
+              theme,
+              Icons.map_rounded,
+              'Region',
+              region,
+              Colors.teal,
+            ),
+          ],
+          if (city != 'Unknown') ...[
+            const SizedBox(height: 16),
+            _buildLocationDetailRow(
+              theme,
+              Icons.location_city_rounded,
+              'City',
+              city,
+              Colors.orange,
+            ),
+          ],
+          const SizedBox(height: 16),
+          _buildLocationDetailRow(
+            theme,
+            Icons.business_rounded,
+            'ISP',
+            isp,
+            Colors.purple,
+          ),
+          if (timezone != 'Unknown') ...[
+            const SizedBox(height: 16),
+            _buildLocationDetailRow(
+              theme,
+              Icons.access_time_rounded,
+              'Timezone',
+              timezone,
+              Colors.green,
+            ),
+          ],
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'What is this?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isTor
+                      ? 'This shows the location of the Tor exit node that websites see, not your real location. Your actual location is hidden and protected by the Tor network.'
+                      : 'This is the location associated with your public IP address. Websites you visit can see this information, which is why using a VPN or Tor is recommended for privacy.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.tertiary.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.devices_rounded,
+                      color: theme.colorScheme.tertiary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Local vs Public Address',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Public IP: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            'Visible to websites and services on the internet. Used for geolocation and identification.\n\n',
+                      ),
+                      TextSpan(
+                        text: 'Local Address: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            'Private IP used only within your home/office network. Not visible to the internet (e.g., 192.168.x.x, 10.0.x.x).',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocalAddressExplanationPage extends StatelessWidget {
+  const _LocalAddressExplanationPage();
+
+  Widget _buildAddressTypeRow(
+    ThemeData theme,
+    String type,
+    String example,
+    String description,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 60,
+              child: Text(
+                type,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+            Text(
+              example,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 12,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 60, top: 2),
+          child: Text(
+            description,
+            style: TextStyle(
+              fontSize: 11,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInterfaceRow(ThemeData theme, String name, String description) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.network_check, color: theme.colorScheme.primary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Local Network Addresses')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Text(
+            'What are Local Addresses?',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Local network addresses (also called private IP addresses) are used to identify your device within your home or office network. They are NOT visible to the internet.',
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Common Types
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Common Address Types',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildAddressTypeRow(
+                  theme,
+                  'IPv4',
+                  '192.168.x.x, 10.0.x.x',
+                  'Most common for home networks',
+                ),
+                const SizedBox(height: 8),
+                _buildAddressTypeRow(
+                  theme,
+                  'IPv6',
+                  'fe80::...',
+                  'Newer protocol, much longer addresses',
+                ),
+                const SizedBox(height: 8),
+                _buildAddressTypeRow(
+                  theme,
+                  'Loopback',
+                  '127.0.0.1',
+                  'Points to your own device',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Public vs Local
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.tertiary.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.compare_arrows_rounded,
+                      color: theme.colorScheme.tertiary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Local vs Public',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.5,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: 'Local Address: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            'Only works inside your network (e.g., 192.168.1.5). Your phone, laptop, and printer all have different local addresses.\n\n',
+                      ),
+                      TextSpan(
+                        text: 'Public IP: ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            'Visible to the entire internet. All devices in your home share the same public IP when accessing websites.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Network Interfaces
+          Text(
+            'Network Interfaces',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Each connection method has its own address:',
+            style: TextStyle(
+              fontSize: 14,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildInterfaceRow(theme, 'WiFi (wlan0, en0)', 'Wireless connection'),
+          const SizedBox(height: 8),
+          _buildInterfaceRow(theme, 'Ethernet (eth0, en1)', 'Wired connection'),
+          const SizedBox(height: 8),
+          _buildInterfaceRow(theme, 'Loopback (lo)', 'Internal testing'),
+
+          const SizedBox(height: 20),
+
+          // Privacy Note
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: theme.colorScheme.secondary.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.shield_outlined,
+                  color: theme.colorScheme.secondary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Privacy Note',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Local addresses are private and safe to share within your network. However, IPv6 addresses can sometimes leak your location even when using a VPN. Check the Privacy Assessment for warnings.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSecondaryContainer,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _DebugInfoPage extends StatelessWidget {
+  final Map<String, dynamic>? networkInfo;
+  final int selectedProviderIndex;
+  final List<IPProvider> allProviders;
+  final bool isLoading;
+  final String? errorMessage;
+
+  const _DebugInfoPage({
+    required this.networkInfo,
+    required this.selectedProviderIndex,
+    required this.allProviders,
+    required this.isLoading,
+    this.errorMessage,
+  });
+
+  Widget _buildDebugRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurfaceVariant,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.colorScheme.onSurface,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Debug Information')),
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.bug_report_rounded,
+                color: theme.colorScheme.error,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Debug Information',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Selected Provider
+          Text(
+            'Selected Provider',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDebugRow(
+                  theme,
+                  'Index',
+                  selectedProviderIndex.toString(),
+                ),
+                _buildDebugRow(
+                  theme,
+                  'Name',
+                  allProviders[selectedProviderIndex].name,
+                ),
+                _buildDebugRow(
+                  theme,
+                  'URL',
+                  allProviders[selectedProviderIndex].ipUrl,
+                ),
+                _buildDebugRow(
+                  theme,
+                  'JSON Key',
+                  allProviders[selectedProviderIndex].ipJsonKey,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Network Info
+          Text(
+            'Network Info State',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDebugRow(
+                  theme,
+                  'Is Null',
+                  (networkInfo == null).toString(),
+                ),
+                _buildDebugRow(theme, 'Is Loading', isLoading.toString()),
+                if (errorMessage != null)
+                  _buildDebugRow(theme, 'Error', errorMessage!),
+                if (networkInfo != null) ...[
+                  _buildDebugRow(theme, 'Keys', networkInfo!.keys.join(', ')),
+                  _buildDebugRow(
+                    theme,
+                    'Public IP',
+                    networkInfo!['publicIP']?.toString() ?? 'null',
+                  ),
+                  _buildDebugRow(
+                    theme,
+                    'Provider',
+                    networkInfo!['provider']?.toString() ?? 'null',
+                  ),
+                  _buildDebugRow(
+                    theme,
+                    'Provider URL',
+                    networkInfo!['providerUrl']?.toString() ?? 'null',
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // IP Details
+          Text(
+            'IP Details',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (networkInfo?['ipDetails'] == null)
+                  _buildDebugRow(theme, 'Status', 'NULL - This is the problem!')
+                else if (networkInfo!['ipDetails'] is! Map)
+                  _buildDebugRow(
+                    theme,
+                    'Type',
+                    networkInfo!['ipDetails'].runtimeType.toString(),
+                  )
+                else ...[
+                  _buildDebugRow(theme, 'Type', 'Map (correct)'),
+                  ...(networkInfo!['ipDetails'] as Map).entries.map(
+                    (e) => _buildDebugRow(
+                      theme,
+                      e.key.toString(),
+                      e.value?.toString() ?? 'null',
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Raw JSON
+          Text(
+            'Raw Data (JSON)',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: SelectableText(
+              networkInfo != null
+                  ? const JsonEncoder.withIndent('  ').convert(networkInfo)
+                  : 'null',
+              style: TextStyle(
+                fontSize: 10,
+                fontFamily: 'monospace',
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+        ],
       ),
     );
   }
