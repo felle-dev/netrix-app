@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android/app/src/main/res/layout/network_checker_widget.xml -->
+<RelativeLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/widget_container"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_background"
+  android:padding="16dp"
+>
+  <!-- Refresh Button - Top Right -->
+  <ImageButton
+    android:id="@+id/refresh_button"
+    android:layout_width="32dp"
+    android:layout_height="32dp"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"
+    android:background="@drawable/refresh_button_background"
+    android:src="@drawable/ic_refresh"
+    android:contentDescription="Refresh"
+    android:scaleType="centerInside"
+    android:padding="6dp"
+  />
+
+  <!-- Header -->
+  <LinearLayout
+    android:id="@+id/header_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentStart="true"
+    android:layout_toStartOf="@id/refresh_button"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+  >
+    <ImageView
+      android:id="@+id/location_icon"
+      android:layout_width="20dp"
+      android:layout_height="20dp"
+      android:src="@drawable/ic_location"
+      android:contentDescription="Location"
+      android:tint="#6750A4"
+    />
+
+    <TextView
+      android:id="@+id/header_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:text="Your Location"
+      android:textSize="14sp"
+      android:textColor="#1C1B1F"
+      android:fontFamily="sans-serif-medium"
+    />
+  </LinearLayout>
+
+  <!-- Main Content -->
+  <LinearLayout
+    android:id="@+id/main_content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/header_layout"
+    android:layout_marginTop="16dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+  >
+    <!-- Flag -->
+    <TextView
+      android:id="@+id/country_flag"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="🌍"
+      android:textSize="48sp"
+    />
+
+    <!-- Location Info -->
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:layout_marginStart="16dp"
+      android:orientation="vertical"
+    >
+      <TextView
+        android:id="@+id/country_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Unknown"
+        android:textSize="20sp"
+        android:textColor="#1C1B1F"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:ellipsize="end"
+      />
+
+      <TextView
+        android:id="@+id/city_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text=""
+        android:textSize="14sp"
+        android:textColor="#49454F"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="gone"
+      />
+    </LinearLayout>
+  </LinearLayout>
+
+  <!-- IP Address Section -->
+  <LinearLayout
+    android:id="@+id/ip_section"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/main_content"
+    android:layout_marginTop="12dp"
+    android:background="@drawable/ip_box_background"
+    android:padding="12dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+  >
+    <ImageView
+      android:layout_width="16dp"
+      android:layout_height="16dp"
+      android:src="@drawable/ic_public"
+      android:contentDescription="IP"
+      android:tint="#49454F"
+    />
+
+    <TextView
+      android:id="@+id/ip_address"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginStart="8dp"
+      android:text="•••.•••.•••.•••"
+      android:textSize="13sp"
+      android:textColor="#1C1B1F"
+      android:fontFamily="monospace"
+      android:fontWeight="600"
+    />
+  </LinearLayout>
+
+  <!-- Tor Banner (Initially Hidden) -->
+  <LinearLayout
+    android:id="@+id/tor_banner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/ip_section"
+    android:layout_marginTop="8dp"
+    android:background="@drawable/tor_banner_background"
+    android:padding="10dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:visibility="gone"
+  >
+    <ImageView
+      android:layout_width="16dp"
+      android:layout_height="16dp"
+      android:src="@drawable/ic_shield"
+      android:contentDescription="Tor"
+      android:tint="#9C27B0"
+    />
+
+    <TextView
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:layout_marginStart="8dp"
+      android:text="Protected by Tor"
+      android:textSize="11sp"
+      android:textColor="#6A1B9A"
+      android:fontWeight="500"
+    />
+  </LinearLayout>
+
+  <!-- Last Update Time -->
+  <TextView
+    android:id="@+id/last_update"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentEnd="true"
+    android:text="Updated: --:--"
+    android:textSize="10sp"
+    android:textColor="#79747E"
+    android:fontStyle="italic"
+  />
+
+  <!-- Loading State (Initially Hidden) -->
+  <LinearLayout
+    android:id="@+id/loading_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:visibility="gone"
+  >
+    <ProgressBar
+      android:layout_width="48dp"
+      android:layout_height="48dp"
+      android:indeterminate="true"
+      style="?android:attr/progressBarStyle"
+    />
+
+    <TextView
+      android:id="@+id/loading_text"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="12dp"
+      android:text="Refreshing..."
+      android:textSize="13sp"
+      android:textColor="#49454F"
+    />
+  </LinearLayout>
+
+  <!-- Error State (Initially Hidden) -->
+  <LinearLayout
+    android:id="@+id/error_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:visibility="gone"
+  >
+    <ImageView
+      android:layout_width="48dp"
+      android:layout_height="48dp"
+      android:src="@drawable/ic_error"
+      android:contentDescription="Error"
+      android:tint="#B3261E"
+    />
+
+    <TextView
+      android:id="@+id/error_message"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:text="Unable to load"
+      android:textSize="12sp"
+      android:textColor="#B3261E"
+      android:gravity="center"
+      android:maxLines="2"
+      android:ellipsize="end"
+    />
+  </LinearLayout>
+</RelativeLayout>

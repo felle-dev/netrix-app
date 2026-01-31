@@ -4,8 +4,21 @@ import 'dart:ui';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'tabs/network_checker_tab.dart';
 import 'theme/app_theme.dart';
+import 'services/home_widget_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize home widget
+  final widgetService = HomeWidgetService();
+  await widgetService.initialize();
+
+  // Register background callback for widget updates
+  await HomeWidgetService.registerBackgroundCallback();
+
+  // Update widget on app start
+  await widgetService.updateWidget();
+
   runApp(const NetrixApp());
 }
 
@@ -33,6 +46,17 @@ class NetrixApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme(darkColorScheme),
           themeMode: ThemeMode.system,
           debugShowCheckedModeBanner: false,
+          // Handle deep links from widget refresh button
+          onGenerateRoute: (settings) {
+            if (settings.name == '/refresh' ||
+                settings.name?.contains('refresh') == true) {
+              // Widget refresh button was tapped - open app and refresh
+              return MaterialPageRoute(
+                builder: (context) => const HomeScreen(autoRefresh: true),
+              );
+            }
+            return MaterialPageRoute(builder: (context) => const HomeScreen());
+          },
           home: const HomeScreen(),
         );
       },
@@ -41,7 +65,9 @@ class NetrixApp extends StatelessWidget {
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final bool autoRefresh;
+
+  const HomeScreen({Key? key, this.autoRefresh = false}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -50,11 +76,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _navIndex = 0;
   late PageController _pageController;
+  final GlobalKey<NetworkCheckerTabState> _networkCheckerKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _navIndex);
+
+    // If opened from widget refresh, trigger a refresh after build
+    if (widget.autoRefresh) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _networkCheckerKey.currentState?.refreshNetwork();
+      });
+    }
   }
 
   @override
@@ -75,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onPageChanged(int index) {
     setState(() => _navIndex = index);
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -141,8 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
         body: PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
-          children: const [
-            NetworkCheckerTab(),
+          children: [
+            NetworkCheckerTab(key: _networkCheckerKey),
             // AppTrackerTab(),
             // SpeedTestTab(),
           ],

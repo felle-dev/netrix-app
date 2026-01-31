@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android/app/src/main/res/values/strings.xml -->
+<resources>
+  <string name="app_name">Netrix</string>
+  <string name="widget_description">Shows your current IP location and connection status</string>
+  <string name="widget_name">Network Checker</string>
+
+  <!-- Widget content descriptions -->
+  <string name="refresh_button_desc">Refresh network information</string>
+  <string name="location_icon_desc">Location indicator</string>
+  <string name="ip_icon_desc">IP address</string>
+  <string name="tor_icon_desc">Tor protection indicator</string>
+  <string name="error_icon_desc">Error occurred</string>
+
+  <!-- Widget text -->
+  <string name="default_location">Your Location</string>
+  <string name="tor_location">Your Tor Exit Location</string>
+  <string name="tor_protected">Protected by Tor</string>
+  <string name="unknown_location">Unknown</string>
+  <string name="masked_ip">•••.•••.•••.•••</string>
+  <string name="updated_label">Updated: %s</string>
+  <string name="updated_placeholder">Updated: --:--</string>
+  <string name="error_unable_load">Unable to load</string>
+  <string name="error_no_connection">No connection</string>
+</resources>

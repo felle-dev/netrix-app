@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:netrix/pages/provider_settings_page.dart';
 import '../models/ip_provider.dart';
 import '../controllers/network_service.dart';
 import '../controllers/provider_manager.dart';
+import '../services/home_widget_service.dart';
 import '../widgets/ip_location_card.dart';
 import '../widgets/ip_details_card.dart';
 import '../widgets/local_addresses_card.dart';
 import '../widgets/connection_status_card.dart';
 import '../widgets/privacy_banner.dart';
-import '../pages/provider_settings_page.dart';
 
 class NetworkCheckerTab extends StatefulWidget {
   const NetworkCheckerTab({Key? key}) : super(key: key);
 
   @override
-  State<NetworkCheckerTab> createState() => _NetworkCheckerTabState();
+  State<NetworkCheckerTab> createState() => NetworkCheckerTabState();
 }
 
-class _NetworkCheckerTabState extends State<NetworkCheckerTab>
+class NetworkCheckerTabState extends State<NetworkCheckerTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
   final NetworkService _networkService = NetworkService();
   final ProviderManager _providerManager = ProviderManager();
+  final HomeWidgetService _widgetService = HomeWidgetService();
 
   bool _isLoading = false;
   Map<String, dynamic>? _networkInfo;
@@ -60,6 +62,11 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
     await _providerManager.saveProviders(_providers, _selectedProviderIndex);
   }
 
+  /// Public method to trigger network refresh (can be called from parent)
+  Future<void> refreshNetwork() async {
+    return _checkNetwork();
+  }
+
   Future<void> _checkNetwork() async {
     if (_providers.isEmpty) {
       setState(() {
@@ -82,6 +89,9 @@ class _NetworkCheckerTabState extends State<NetworkCheckerTab>
         _networkInfo = info;
         _isLoading = false;
       });
+
+      // Update home screen widget after successful refresh
+      await _widgetService.updateWidget();
     } catch (e) {
       setState(() {
         _errorMessage = 'Error gathering network info: $e';

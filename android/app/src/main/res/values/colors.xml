@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android/app/src/main/res/values/colors.xml -->
+<resources>
+  <!-- Material 3 Primary Colors -->
+  <color name="primary">#6750A4</color>
+  <color name="primary_container">#F3EDF7</color>
+  <color name="on_primary">#FFFFFF</color>
+  <color name="on_primary_container">#1C1B1F</color>
+
+  <!-- Surface Colors -->
+  <color name="surface">#FFFFFF</color>
+  <color name="surface_variant">#F5F5F5</color>
+  <color name="on_surface">#1C1B1F</color>
+  <color name="on_surface_variant">#49454F</color>
+
+  <!-- Error Colors -->
+  <color name="error">#B3261E</color>
+  <color name="on_error">#FFFFFF</color>
+  <color name="error_container">#F9DEDC</color>
+
+  <!-- Outline Colors -->
+  <color name="outline">#79747E</color>
+  <color name="outline_variant">#E0E0E0</color>
+
+  <!-- Tor Colors -->
+  <color name="tor_purple">#9C27B0</color>
+  <color name="tor_purple_light">#F3E5F5</color>
+  <color name="tor_purple_dark">#6A1B9A</color>
+  <color name="tor_border">#CE93D8</color>
+
+  <!-- IP Box Colors -->
+  <color name="ip_background">#F5F5F5</color>
+  <color name="ip_border">#E8E8E8</color>
+
+  <!-- Widget Background -->
+  <color name="widget_background">#FFFFFF</color>
+  <color name="widget_border">#E0E0E0</color>
+</resources>
