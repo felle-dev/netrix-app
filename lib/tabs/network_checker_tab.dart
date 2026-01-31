@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:netrix/pages/provider_settings_page.dart';
+import 'package:home_widget/home_widget.dart';
 import '../models/ip_provider.dart';
 import '../controllers/network_service.dart';
 import '../controllers/provider_manager.dart';
@@ -9,6 +10,7 @@ import '../widgets/ip_details_card.dart';
 import '../widgets/local_addresses_card.dart';
 import '../widgets/connection_status_card.dart';
 import '../widgets/privacy_banner.dart';
+import '../widgets/network_loading_indicator.dart';
 
 class NetworkCheckerTab extends StatefulWidget {
   const NetworkCheckerTab({Key? key}) : super(key: key);
@@ -18,7 +20,7 @@ class NetworkCheckerTab extends StatefulWidget {
 }
 
 class NetworkCheckerTabState extends State<NetworkCheckerTab>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   @override
   bool get wantKeepAlive => true;
 
@@ -27,6 +29,8 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
   final HomeWidgetService _widgetService = HomeWidgetService();
 
   bool _isLoading = false;
+  double _loadingProgress = 0.0;
+  String _loadingStatus = 'Initializing...';
   Map<String, dynamic>? _networkInfo;
   String? _errorMessage;
   int _selectedProviderIndex = 0;
@@ -35,7 +39,51 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProviders();
+    _setupWidgetListener();
+    print('NetworkCheckerTab initialized');
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _setupWidgetListener() {
+    print('Setting up widget listener');
+    HomeWidget.widgetClicked.listen((Uri? uri) {
+      print('Widget clicked: ${uri?.toString()}');
+      if (uri?.host == 'refresh' || uri == null) {
+        print('Triggering network check from widget');
+        _checkNetwork();
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('App lifecycle state: $state');
+    if (state == AppLifecycleState.resumed) {
+      _checkForPendingWidgetRefresh();
+    }
+  }
+
+  Future<void> _checkForPendingWidgetRefresh() async {
+    try {
+      final shouldRefresh = await HomeWidget.getWidgetData<bool>(
+        'shouldRefresh',
+      );
+      print('Should refresh from widget: $shouldRefresh');
+      if (shouldRefresh == true) {
+        await HomeWidget.saveWidgetData<bool>('shouldRefresh', false);
+        print('Starting widget-triggered refresh');
+        _checkNetwork();
+      }
+    } catch (e) {
+      print('Error checking pending refresh: $e');
+    }
   }
 
   Future<void> _loadProviders() async {
@@ -62,41 +110,143 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     await _providerManager.saveProviders(_providers, _selectedProviderIndex);
   }
 
-  /// Public method to trigger network refresh (can be called from parent)
   Future<void> refreshNetwork() async {
     return _checkNetwork();
   }
 
   Future<void> _checkNetwork() async {
+    print('=== Starting network check ===');
+
     if (_providers.isEmpty) {
       setState(() {
         _errorMessage = 'No providers available';
         _isLoading = false;
       });
+      await _widgetService.updateLoadingState(0, 'Error', 'No providers');
+      await _widgetService.hideLoading();
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _loadingProgress = 0.0;
+      _loadingStatus = 'Preparing network check...';
       _errorMessage = null;
     });
 
+    await _widgetService.updateLoadingState(
+      5,
+      'Started',
+      'App initiated check',
+    );
+
     try {
+      await Future.delayed(const Duration(milliseconds: 200));
+      setState(() {
+        _loadingProgress = 0.1;
+        _loadingStatus = 'Selecting provider...';
+      });
+      await _widgetService.updateLoadingState(
+        10,
+        'Provider',
+        'Loading provider list',
+      );
+
       final provider = _providers[_selectedProviderIndex];
-      final info = await _networkService.gatherNetworkInfo(provider);
+      print('Using provider: ${provider.name}');
+
+      setState(() {
+        _loadingProgress = 0.2;
+        _loadingStatus = 'Fetching public IP...';
+      });
+      await _widgetService.updateLoadingState(
+        20,
+        'Fetching IP',
+        'Provider: ${provider.name}',
+      );
+
+      final infoFuture = _networkService.gatherNetworkInfo(provider);
+      _simulateProgress();
+
+      print('Waiting for network info...');
+      final info = await infoFuture;
+      print('Got network info: ${info.keys}');
+
+      setState(() {
+        _loadingProgress = 0.8;
+        _loadingStatus = 'Processing location data...';
+      });
+      await _widgetService.updateLoadingState(
+        80,
+        'Processing',
+        'Parsing response',
+      );
+
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      setState(() {
+        _loadingProgress = 0.9;
+        _loadingStatus = 'Updating widget...';
+      });
+
+      print('Quick updating widget...');
+      await _widgetService.quickUpdateWidget(info);
+
+      setState(() {
+        _loadingProgress = 1.0;
+        _loadingStatus = 'Complete!';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 300));
 
       setState(() {
         _networkInfo = info;
         _isLoading = false;
       });
 
-      // Update home screen widget after successful refresh
-      await _widgetService.updateWidget();
+      print('=== Network check complete ===');
     } catch (e) {
+      print('ERROR in network check: $e');
+      await _widgetService.updateLoadingState(0, 'Error', e.toString());
+      await _widgetService.hideLoading();
+
       setState(() {
         _errorMessage = 'Error gathering network info: $e';
         _isLoading = false;
+        _loadingProgress = 0.0;
       });
+    }
+  }
+
+  Future<void> _simulateProgress() async {
+    final steps = [0.3, 0.4, 0.5, 0.6, 0.7];
+    final statuses = [
+      'Checking network interfaces...',
+      'Detecting VPN/Tor...',
+      'Analyzing privacy status...',
+      'Checking DNS servers...',
+      'Finalizing results...',
+    ];
+    final widgetStatuses = [
+      'Network check',
+      'VPN/Tor detect',
+      'Privacy analysis',
+      'DNS check',
+      'Finalizing',
+    ];
+
+    for (int i = 0; i < steps.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!_isLoading) break;
+      setState(() {
+        _loadingProgress = steps[i];
+        _loadingStatus = statuses[i];
+      });
+      await _widgetService.updateLoadingState(
+        (steps[i] * 100).toInt(),
+        widgetStatuses[i],
+        'Step ${i + 1}/5',
+      );
     }
   }
 
@@ -153,7 +303,10 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return NetworkLoadingIndicator(
+        progress: _loadingProgress,
+        statusText: _loadingStatus,
+      );
     }
 
     if (_errorMessage != null) {

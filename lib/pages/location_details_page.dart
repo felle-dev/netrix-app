@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../utils/network_utils.dart';
 
 class LocationDetailsPage extends StatelessWidget {
@@ -15,6 +17,11 @@ class LocationDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isTor = details['isTor'] == true;
+
+    // Get coordinates if available
+    final lat = details['lat'] ?? details['latitude'];
+    final lon = details['lon'] ?? details['longitude'];
+    final hasCoordinates = lat != null && lon != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -40,6 +47,61 @@ class LocationDetailsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
+
+          // Map widget
+          if (hasCoordinates) ...[
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant,
+                  width: 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(
+                    double.parse(lat.toString()),
+                    double.parse(lon.toString()),
+                  ),
+                  initialZoom: 10.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.yourapp.networkchecker',
+                    maxZoom: 19,
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(
+                          double.parse(lat.toString()),
+                          double.parse(lon.toString()),
+                        ),
+                        width: 40,
+                        height: 40,
+                        child: Icon(
+                          isTor ? Icons.vpn_lock : Icons.location_on,
+                          color: isTor
+                              ? Colors.purple
+                              : theme.colorScheme.error,
+                          size: 40,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           if (isTor) ...[
             Container(
               padding: const EdgeInsets.all(16),

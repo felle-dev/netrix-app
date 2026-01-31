@@ -43,37 +43,55 @@ class NetworkUtils {
       'United Kingdom': 'GB',
       'UK': 'GB',
       'Germany': 'DE',
+      'GERMAN': 'DE', // Added alternate name
       'France': 'FR',
+      'FRANCE': 'FR', // Added uppercase variant
       'Italy': 'IT',
       'Spain': 'ES',
+      'SPANISH': 'ES', // Added alternate name
       'Portugal': 'PT',
-      'Netherlands': 'NL',
+      'The Netherlands': 'NL',
+      'Netherlands': 'NL', // Added
+      'DUTCH': 'NL', // Added alternate name
       'Belgium': 'BE',
       'Switzerland': 'CH',
+      'SWITZERLAND': 'CH', // Added uppercase variant
       'Austria': 'AT',
+      'AUSTRIA': 'AT', // Added uppercase variant
       'Sweden': 'SE',
+      'SWEDEN': 'SE', // Added uppercase variant
       'Norway': 'NO',
       'Denmark': 'DK',
+      'DENMARK': 'DK', // Added uppercase variant
       'Finland': 'FI',
+      'FINLAND': 'FI', // Added uppercase variant
       'Poland': 'PL',
+      'POLAND': 'PL', // Added uppercase variant
       'Czech Republic': 'CZ',
       'Czechia': 'CZ',
+      'CEKO': 'CZ', // Added alternate name
       'Hungary': 'HU',
+      'HUNGARIA': 'HU', // Added alternate name
       'Romania': 'RO',
+      'ROMANIA': 'RO', // Added uppercase variant
       'Bulgaria': 'BG',
+      'BULGARIA': 'BG', // Added uppercase variant
       'Greece': 'GR',
       'Ireland': 'IE',
       'Iceland': 'IS',
+      'ICELAND': 'IS', // Added uppercase variant
       'Croatia': 'HR',
       'Serbia': 'RS',
       'Ukraine': 'UA',
       'Russia': 'RU',
+      'RUSIA': 'RU', // Added alternate spelling
       'Russian Federation': 'RU',
       'Belarus': 'BY',
       'Estonia': 'EE',
       'Latvia': 'LV',
       'Lithuania': 'LT',
       'Slovakia': 'SK',
+      'SLOVAKIA': 'SK', // Added uppercase variant
       'Slovenia': 'SI',
       'Luxembourg': 'LU',
       'Malta': 'MT',
@@ -82,6 +100,7 @@ class NetworkUtils {
       // Asia
       'China': 'CN',
       'Japan': 'JP',
+      'JAPAN': 'JP', // Added uppercase variant
       'South Korea': 'KR',
       'Korea, Republic of': 'KR',
       'North Korea': 'KP',
@@ -92,6 +111,7 @@ class NetworkUtils {
       'Philippines': 'PH',
       'Malaysia': 'MY',
       'Singapore': 'SG',
+      'SINGAPURA': 'SG', // Added alternate name
       'Taiwan': 'TW',
       'Hong Kong': 'HK',
       'Pakistan': 'PK',
@@ -141,6 +161,7 @@ class NetworkUtils {
 
       // Oceania
       'Australia': 'AU',
+      'AUSTRALIA': 'AU', // Added uppercase variant
       'New Zealand': 'NZ',
       'Papua New Guinea': 'PG',
       'Fiji': 'FJ',

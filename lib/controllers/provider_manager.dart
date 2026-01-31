@@ -5,7 +5,6 @@ import '../models/ip_provider.dart';
 class ProviderManager {
   static const String _providersKey = 'providers';
   static const String _selectedIndexKey = 'selected_provider_index';
-
   List<IPProvider> getDefaultProviders() {
     return [
       IPProvider(
@@ -20,7 +19,6 @@ class ProviderManager {
   Future<List<IPProvider>> loadProviders() async {
     final prefs = await SharedPreferences.getInstance();
     final providersJson = prefs.getString(_providersKey);
-
     if (providersJson != null) {
       final List<dynamic> decoded = json.decode(providersJson);
       return decoded.map((e) => IPProvider.fromJson(e)).toList();
