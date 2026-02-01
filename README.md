@@ -10,6 +10,15 @@ A Flutter application for network information and privacy assessment.
 - Privacy assessment and leak detection
 - Customizable IP lookup providers
 
+## Screenshots
+
+<div style="display: flex; justify-content: space-around; gap: 10px;">
+  <img src="./screenshots/ss1.png" width="200">
+  <img src="./screenshots/ss2.png" width="200">
+  <img src="./screenshots/ss3.png" width="200">
+</div>
+
+
 ## Privacy
 
 All data is processed locally on your device. No information is sent to our servers. The app uses third-party IP lookup services to gather network information.
