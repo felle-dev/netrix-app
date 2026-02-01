@@ -41,7 +41,6 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadProviders();
-    _setupWidgetListener();
     print('NetworkCheckerTab initialized');
   }
 
@@ -49,17 +48,6 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  void _setupWidgetListener() {
-    print('Setting up widget listener');
-    HomeWidget.widgetClicked.listen((Uri? uri) {
-      print('Widget clicked: ${uri?.toString()}');
-      if (uri?.host == 'refresh' || uri == null) {
-        print('Triggering network check from widget');
-        _checkNetwork();
-      }
-    });
   }
 
   @override
@@ -77,8 +65,11 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
       );
       print('Should refresh from widget: $shouldRefresh');
       if (shouldRefresh == true) {
+        // Clear the flag
         await HomeWidget.saveWidgetData<bool>('shouldRefresh', false);
         print('Starting widget-triggered refresh');
+        // Small delay to ensure app is fully visible
+        await Future.delayed(const Duration(milliseconds: 300));
         _checkNetwork();
       }
     } catch (e) {

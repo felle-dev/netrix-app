@@ -34,34 +34,22 @@ class NetworkCheckerWidget : AppWidgetProvider() {
             ACTION_REFRESH -> {
                 Log.d(TAG, "Refresh button clicked!")
                 
-                val appWidgetManager = AppWidgetManager.getInstance(context)
-                val appWidgetIds = appWidgetManager.getAppWidgetIds(
-                    android.content.ComponentName(context, NetworkCheckerWidget::class.java)
-                )
-                
-                for (appWidgetId in appWidgetIds) {
-                    showLoadingState(context, appWidgetManager, appWidgetId, 0, "Triggered", "Refresh at ${getCurrentTime()}")
-                }
-                
-                // Set refresh flag
+                // Set the refresh flag so app knows to refresh when it opens
                 val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 prefs.edit().putBoolean("shouldRefresh", true).apply()
-                Log.d(TAG, "Set shouldRefresh flag")
                 
-                // Open app in background (won't show UI if using MainActivity properly)
+                // Simply open the app with a deep link
+                val appIntent = Intent(Intent.ACTION_VIEW).apply {
+                    data = android.net.Uri.parse("networkchecker://refresh")
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    setPackage(context.packageName)
+                }
+                
                 try {
-                    val appIntent = Intent(context, MainActivity::class.java).apply {
-                        action = Intent.ACTION_MAIN
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
-                                Intent.FLAG_ACTIVITY_NO_ANIMATION or
-                                Intent.FLAG_FROM_BACKGROUND
-                        putExtra("widget_refresh", true)
-                        putExtra("silent_mode", true)
-                    }
                     context.startActivity(appIntent)
-                    Log.d(TAG, "Started MainActivity in background")
+                    Log.d(TAG, "Launched app for refresh")
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to start activity: $e")
+                    Log.e(TAG, "Failed to launch app: $e")
                 }
             }
         }

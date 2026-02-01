@@ -27,10 +27,7 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-        ),
+        // REMOVED: systemOverlayStyle - this is handled dynamically in main.dart now
       ),
       cardTheme: CardThemeData(
         elevation: 0,
@@ -65,10 +62,7 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
+        // REMOVED: systemOverlayStyle - this is handled dynamically in main.dart now
       ),
       cardTheme: CardThemeData(
         elevation: 0,

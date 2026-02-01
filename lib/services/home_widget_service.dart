@@ -74,7 +74,6 @@ class HomeWidgetService {
 
       final provider = providers[selectedIndex];
 
-      // Fixed: Use ipUrl instead of url
       await updateLoadingState(
         30,
         'Fetching IP',
@@ -179,34 +178,5 @@ class HomeWidgetService {
       iOSName: _iOSWidgetName,
     );
     print('Widget error: $error');
-  }
-
-  static Future<void> registerBackgroundCallback() async {
-    await HomeWidget.registerBackgroundCallback(backgroundCallback);
-  }
-
-  @pragma('vm:entry-point')
-  static Future<void> backgroundCallback(Uri? uri) async {
-    print('Widget background callback: ${uri?.toString()}');
-
-    if (uri?.host == 'refresh') {
-      try {
-        final service = HomeWidgetService();
-        await service.updateLoadingState(5, 'Background', 'Callback triggered');
-        await service.updateWidget();
-      } catch (e) {
-        print('Background update error: $e');
-        await HomeWidget.saveWidgetData<bool>('isLoading', false);
-        await HomeWidget.saveWidgetData<bool>('hasError', true);
-        await HomeWidget.saveWidgetData<String>(
-          'errorMessage',
-          'Background error: $e',
-        );
-        await HomeWidget.updateWidget(
-          androidName: 'NetworkCheckerWidget',
-          iOSName: 'NetworkCheckerWidget',
-        );
-      }
-    }
   }
 }

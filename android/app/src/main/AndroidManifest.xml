@@ -30,6 +30,7 @@
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
 
+      <!-- Deep link for widget refresh -->
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
@@ -37,17 +38,6 @@
         <data android:scheme="networkchecker" />
       </intent-filter>
     </activity>
-
-    <!-- Transparent Widget Refresh Activity -->
-    <activity
-      android:name=".WidgetRefreshActivity"
-      android:exported="true"
-      android:theme="@style/Theme.Transparent"
-      android:excludeFromRecents="true"
-      android:noHistory="true"
-      android:taskAffinity=""
-      android:launchMode="singleInstance"
-    />
 
     <!-- Widget Receiver -->
     <receiver
