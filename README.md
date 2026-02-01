@@ -41,7 +41,7 @@ dependencies:
 ### Setup
 
 ```bash
-git clone https://github.com/yourusername/netrix.git
+git clone https://github.com/felle-dev/netrix-app.git
 cd netrix
 flutter pub get
 flutter run
