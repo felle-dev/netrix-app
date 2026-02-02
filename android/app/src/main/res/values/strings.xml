@@ -13,8 +13,8 @@
   <string name="error_icon_desc">Error occurred</string>
 
   <!-- Widget text -->
-  <string name="default_location">Your Location</string>
-  <string name="tor_location">Your Tor Exit Location</string>
+  <string name="default_location">Location</string>
+  <string name="tor_location">Tor Exit Location</string>
   <string name="tor_protected">Protected by Tor</string>
   <string name="unknown_location">Unknown</string>
   <string name="masked_ip">•••.•••.•••.•••</string>

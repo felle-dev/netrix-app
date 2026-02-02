@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class NetworkLoadingIndicator extends StatelessWidget {
-  final double progress; // 0.0 to 1.0
+  final double progress;
   final String? statusText;
   final bool showPercentage;
 
@@ -23,16 +23,15 @@ class NetworkLoadingIndicator extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Circular progress with percentage
             Stack(
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 120,
-                  height: 120,
+                  width: 300,
+                  height: 300,
                   child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 8,
+                    // Remove the value parameter to get the wobbly/indeterminate animation
+                    strokeWidth: 33,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       theme.colorScheme.primary,
@@ -48,25 +47,13 @@ class NetworkLoadingIndicator extends StatelessWidget {
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,
+                          fontSize: 54,
                         ),
                       ),
                     ],
                   ),
               ],
             ),
-            const SizedBox(height: 24),
-            // Status text
-            if (statusText != null)
-              Text(
-                statusText!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            const SizedBox(height: 8),
-            // Loading dots animation
-            _LoadingDots(color: theme.colorScheme.primary),
           ],
         ),
       ),
@@ -156,9 +143,10 @@ class NetworkLoadingCompact extends StatelessWidget {
         Row(
           children: [
             SizedBox(
-              width: 20,
-              height: 20,
+              width: 100,
+              height: 100,
               child: CircularProgressIndicator(
+                // Keep determinate for compact version, or remove for wobbly
                 value: progress,
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation<Color>(

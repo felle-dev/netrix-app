@@ -53,7 +53,6 @@ class _IPLocationFocusCardState extends State<IPLocationFocusCard> {
               _buildLocationInfo(theme, country, city),
               const SizedBox(height: 16),
               _buildIPDisplay(theme, publicIP),
-              if (isTor) ...[const SizedBox(height: 12), _buildTorBanner()],
             ],
           ),
         ),
@@ -172,33 +171,6 @@ class _IPLocationFocusCardState extends State<IPLocationFocusCard> {
                     ),
                   ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTorBanner() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.purple.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.purple.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.shield_rounded, size: 16, color: Colors.purple),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Your real location is hidden by Tor',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.purple.shade700,
-                fontWeight: FontWeight.w500,
-              ),
             ),
           ),
         ],

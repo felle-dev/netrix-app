@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:netrix/pages/provider_settings_page.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:netrix/widgets/map_preview_card.dart';
 import '../models/ip_provider.dart';
 import '../controllers/network_service.dart';
 import '../controllers/provider_manager.dart';
@@ -11,6 +12,7 @@ import '../widgets/local_addresses_card.dart';
 import '../widgets/connection_status_card.dart';
 import '../widgets/privacy_banner.dart';
 import '../widgets/network_loading_indicator.dart';
+import '../pages/fullscreen_map_page.dart';
 
 class NetworkCheckerTab extends StatefulWidget {
   const NetworkCheckerTab({Key? key}) : super(key: key);
@@ -288,6 +290,40 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     );
   }
 
+  Widget _buildMapWidget(ThemeData theme) {
+    if (_networkInfo == null) return const SizedBox.shrink();
+
+    final ipDetails = _networkInfo!['ipDetails'];
+    if (ipDetails == null) return const SizedBox.shrink();
+
+    final lat = ipDetails['lat'] ?? ipDetails['latitude'];
+    final lon = ipDetails['lon'] ?? ipDetails['longitude'];
+    final isTor = ipDetails['isTor'] == true;
+    final country = ipDetails['country'] ?? 'Unknown';
+
+    return MapPreviewWidget(
+      latitude: lat != null ? double.tryParse(lat.toString()) : null,
+      longitude: lon != null ? double.tryParse(lon.toString()) : null,
+      isTor: isTor,
+      country: country,
+      onTap: () {
+        if (lat != null && lon != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FullScreenMapPage(
+                lat: double.parse(lat.toString()),
+                lon: double.parse(lon.toString()),
+                isTor: isTor,
+                country: country,
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -343,6 +379,8 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
             networkInfo: _networkInfo,
             errorMessage: _errorMessage,
           ),
+          const SizedBox(height: 16),
+          _buildMapWidget(theme),
           const SizedBox(height: 16),
           IPDetailsCard(networkInfo: _networkInfo),
           const SizedBox(height: 16),

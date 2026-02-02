@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- android/app/src/main/res/drawable/refresh_button_background.xml -->
-<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#1A6750A4">
+<!-- android/app/src/main/res/drawable/refresh_button_background_dark.xml -->
+<ripple
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:color="@android:color/transparent"
+>
   <item>
     <shape android:shape="oval">
-      <solid android:color="#F3EDF7" />
+      <solid android:color="@android:color/transparent" />
     </shape>
   </item>
 </ripple>

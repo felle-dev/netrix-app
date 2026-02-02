@@ -144,7 +144,7 @@ class NetworkCheckerWidget : AppWidgetProvider() {
                 views.setViewVisibility(R.id.main_content, View.VISIBLE)
                 views.setViewVisibility(R.id.ip_section, View.VISIBLE)
 
-                val headerText = if (isTor) "Your Tor Exit Location" else "Your Location"
+                val headerText = if (isTor) "Tor Exit Location" else "Location"
                 views.setTextViewText(R.id.header_text, headerText)
 
                 views.setTextViewText(R.id.country_flag, flag)

@@ -41,10 +41,11 @@ class NetrixApp extends StatelessWidget {
           },
           onGenerateRoute: (settings) {
             final uri = Uri.tryParse(settings.name ?? '');
-            final isRefresh = uri?.host == 'refresh' || 
-                              settings.name == '/refresh' ||
-                              settings.name?.contains('refresh') == true;
-            
+            final isRefresh =
+                uri?.host == 'refresh' ||
+                settings.name == '/refresh' ||
+                settings.name?.contains('refresh') == true;
+
             return MaterialPageRoute(
               builder: (context) => HomeScreen(autoRefresh: isRefresh),
             );
@@ -68,7 +69,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<NetworkCheckerTabState> _networkCheckerKey = GlobalKey();
   bool _isInitialized = false;
-  
+
   // Track the last brightness to detect changes
   Brightness? _lastBrightness;
 
@@ -76,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _lastBrightness = Theme.of(context).brightness;
       _initializeServices();
@@ -103,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     // When app resumes, check if theme changed while app was in background
     if (state == AppLifecycleState.resumed && mounted) {
       final currentBrightness = MediaQuery.of(context).platformBrightness;
@@ -118,17 +119,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _initializeServices() async {
     if (_isInitialized) return;
-    
+
     try {
       final widgetService = HomeWidgetService();
       await widgetService.initialize();
-      
+
       if (widget.autoRefresh) {
         print('Auto-refresh triggered from widget');
         await Future.delayed(const Duration(milliseconds: 500));
         await _networkCheckerKey.currentState?.refreshNetwork();
       }
-      
+
       _isInitialized = true;
     } catch (e) {
       print('Error initializing services: $e');
@@ -138,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Update last brightness
     _lastBrightness = theme.brightness;
 
@@ -179,13 +180,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           letterSpacing: 2,
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Network Matrix',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],

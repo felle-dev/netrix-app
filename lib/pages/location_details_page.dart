@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:netrix/widgets/map_preview_card.dart';
 import '../utils/network_utils.dart';
+import 'fullscreen_map_page.dart';
 
 class LocationDetailsPage extends StatelessWidget {
   final Map<String, dynamic> details;
@@ -48,57 +48,25 @@ class LocationDetailsPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Map widget
           if (hasCoordinates) ...[
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: theme.colorScheme.outlineVariant,
-                  width: 1,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(
-                    double.parse(lat.toString()),
-                    double.parse(lon.toString()),
+            MapPreviewWidget(
+              latitude: lat != null ? double.tryParse(lat.toString()) : null,
+              longitude: lon != null ? double.tryParse(lon.toString()) : null,
+              isTor: isTor,
+              country: details['country'] ?? 'Unknown',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FullScreenMapPage(
+                      lat: double.parse(lat.toString()),
+                      lon: double.parse(lon.toString()),
+                      isTor: isTor,
+                      country: details['country'] ?? 'Unknown',
+                    ),
                   ),
-                  initialZoom: 10.0,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                  ),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.yourapp.networkchecker',
-                    maxZoom: 19,
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: LatLng(
-                          double.parse(lat.toString()),
-                          double.parse(lon.toString()),
-                        ),
-                        width: 40,
-                        height: 40,
-                        child: Icon(
-                          isTor ? Icons.vpn_lock : Icons.location_on,
-                          color: isTor
-                              ? Colors.purple
-                              : theme.colorScheme.error,
-                          size: 40,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 24),
           ],

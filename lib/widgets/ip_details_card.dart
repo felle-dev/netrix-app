@@ -61,38 +61,7 @@ class IPDetailsCard extends StatelessWidget {
 
   Widget _buildTorDetails(ThemeData theme, Map details) {
     return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.vpn_lock_rounded,
-                color: Colors.purple,
-                size: 48,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Tor Network Active',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your real location is hidden. Only the Tor exit node IP is visible.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-        ..._buildDetailsList(theme, details, 'Exit Node '),
-      ],
+      children: [..._buildDetailsList(theme, details, 'Exit Node ')],
     );
   }
 
