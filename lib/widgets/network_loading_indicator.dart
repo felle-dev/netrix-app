@@ -30,12 +30,7 @@ class NetworkLoadingIndicator extends StatelessWidget {
                   width: 300,
                   height: 300,
                   child: CircularProgressIndicator(
-                    // Remove the value parameter to get the wobbly/indeterminate animation
-                    strokeWidth: 33,
                     backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.primary,
-                    ),
                   ),
                 ),
                 if (showPercentage)
@@ -47,7 +42,7 @@ class NetworkLoadingIndicator extends StatelessWidget {
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary,
-                          fontSize: 54,
+                          fontSize: 64,
                         ),
                       ),
                     ],

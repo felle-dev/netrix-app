@@ -85,11 +85,6 @@ class NetworkCheckerWidget : AppWidgetProvider() {
             views.setViewVisibility(R.id.header_layout, View.VISIBLE)
             views.setViewVisibility(R.id.loading_layout, View.VISIBLE)
             
-            views.setTextViewText(R.id.loading_text, status)
-            views.setTextViewText(R.id.loading_percentage, "$percentage%")
-            views.setTextViewText(R.id.loading_debug, "Debug: $debug")
-            views.setTextViewText(R.id.loading_timestamp, "Started: ${getCurrentTime()}")
-            
             applyTheme(views, isDarkMode)
             setupRefreshButton(context, views)
             
@@ -216,36 +211,26 @@ class NetworkCheckerWidget : AppWidgetProvider() {
         private fun applyTheme(views: RemoteViews, isDarkMode: Boolean) {
             if (isDarkMode) {
                 views.setInt(R.id.widget_container, "setBackgroundResource", R.drawable.widget_background_dark)
-                views.setTextColor(R.id.header_text, 0xFFE0E0E0.toInt())
+                views.setTextColor(R.id.header_text, 0xFFFFFFFF.toInt())
                 views.setTextColor(R.id.country_name, 0xFFFFFFFF.toInt())
                 views.setTextColor(R.id.city_name, 0xFFB0B0B0.toInt())
                 views.setTextColor(R.id.ip_address, 0xFFFFFFFF.toInt())
                 views.setTextColor(R.id.last_update, 0xFF888888.toInt())
                 views.setTextColor(R.id.error_message, 0xFFFF6B6B.toInt())
-                views.setTextColor(R.id.loading_text, 0xFFE0E0E0.toInt())
-                views.setTextColor(R.id.loading_percentage, 0xFFBB86FC.toInt())
-                views.setTextColor(R.id.loading_debug, 0xFF888888.toInt())
-                views.setTextColor(R.id.loading_timestamp, 0xFF666666.toInt())
                 
-                views.setInt(R.id.location_icon, "setColorFilter", 0xFFBB86FC.toInt())
                 views.setInt(R.id.refresh_button, "setBackgroundResource", R.drawable.refresh_button_background_dark)
                 views.setInt(R.id.ip_section, "setBackgroundResource", R.drawable.ip_box_background_dark)
             } else {
-                views.setInt(R.id.widget_container, "setBackgroundResource", R.drawable.widget_background)
-                views.setTextColor(R.id.header_text, 0xFF1C1B1F.toInt())
-                views.setTextColor(R.id.country_name, 0xFF1C1B1F.toInt())
-                views.setTextColor(R.id.city_name, 0xFF49454F.toInt())
-                views.setTextColor(R.id.ip_address, 0xFF1C1B1F.toInt())
-                views.setTextColor(R.id.last_update, 0xFF79747E.toInt())
-                views.setTextColor(R.id.error_message, 0xFFB3261E.toInt())
-                views.setTextColor(R.id.loading_text, 0xFF49454F.toInt())
-                views.setTextColor(R.id.loading_percentage, 0xFF6750A4.toInt())
-                views.setTextColor(R.id.loading_debug, 0xFF888888.toInt())
-                views.setTextColor(R.id.loading_timestamp, 0xFFAAAAAA.toInt())
+                views.setInt(R.id.widget_container, "setBackgroundResource", R.drawable.widget_background_dark)
+                views.setTextColor(R.id.header_text, 0xFFFFFFFF.toInt())
+                views.setTextColor(R.id.country_name, 0xFFFFFFFF.toInt())
+                views.setTextColor(R.id.city_name, 0xFFB0B0B0.toInt())
+                views.setTextColor(R.id.ip_address, 0xFFFFFFFF.toInt())
+                views.setTextColor(R.id.last_update, 0xFF888888.toInt())
+                views.setTextColor(R.id.error_message, 0xFFFF6B6B.toInt())
                 
-                views.setInt(R.id.location_icon, "setColorFilter", 0xFF6750A4.toInt())
-                views.setInt(R.id.refresh_button, "setBackgroundResource", R.drawable.refresh_button_background)
-                views.setInt(R.id.ip_section, "setBackgroundResource", R.drawable.ip_box_background)
+                views.setInt(R.id.refresh_button, "setBackgroundResource", R.drawable.refresh_button_background_dark)
+                views.setInt(R.id.ip_section, "setBackgroundResource", R.drawable.ip_box_background_dark)
             }
         }
 
