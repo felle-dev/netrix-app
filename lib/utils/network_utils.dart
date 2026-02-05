@@ -40,6 +40,7 @@ class NetworkUtils {
       'Puerto Rico': 'PR',
 
       // Europe
+      'Albania': 'AL',
       'United Kingdom': 'GB',
       'UK': 'GB',
       'Germany': 'DE',
