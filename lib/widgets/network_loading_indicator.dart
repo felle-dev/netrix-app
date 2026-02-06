@@ -23,32 +23,15 @@ class NetworkLoadingIndicator extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 300,
-                  height: 300,
-                  child: CircularProgressIndicator(
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  ),
+            if (showPercentage)
+              Text(
+                '$percentage%',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                  fontSize: 72,
                 ),
-                if (showPercentage)
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$percentage%',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                          fontSize: 64,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
@@ -141,7 +124,6 @@ class NetworkLoadingCompact extends StatelessWidget {
               width: 100,
               height: 100,
               child: CircularProgressIndicator(
-                // Keep determinate for compact version, or remove for wobbly
                 value: progress,
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation<Color>(

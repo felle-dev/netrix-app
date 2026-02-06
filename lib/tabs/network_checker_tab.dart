@@ -330,9 +330,11 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return NetworkLoadingIndicator(
-        progress: _loadingProgress,
-        statusText: _loadingStatus,
+      return Scaffold(
+        body: NetworkLoadingIndicator(
+          progress: _loadingProgress,
+          statusText: _loadingStatus,
+        ),
       );
     }
 
