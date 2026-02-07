@@ -15,7 +15,9 @@ import '../widgets/network_loading_indicator.dart';
 import '../pages/fullscreen_map_page.dart';
 
 class NetworkCheckerTab extends StatefulWidget {
-  const NetworkCheckerTab({Key? key}) : super(key: key);
+  final ValueChanged<bool>? onLoadingChanged;
+
+  const NetworkCheckerTab({Key? key, this.onLoadingChanged}) : super(key: key);
 
   @override
   State<NetworkCheckerTab> createState() => NetworkCheckerTabState();
@@ -107,21 +109,29 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     return _checkNetwork();
   }
 
+  void _setLoading(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+    // Notify parent widget
+    widget.onLoadingChanged?.call(isLoading);
+  }
+
   Future<void> _checkNetwork() async {
     print('=== Starting network check ===');
 
     if (_providers.isEmpty) {
       setState(() {
         _errorMessage = 'No providers available';
-        _isLoading = false;
       });
+      _setLoading(false);
       await _widgetService.updateLoadingState(0, 'Error', 'No providers');
       await _widgetService.hideLoading();
       return;
     }
 
+    _setLoading(true);
     setState(() {
-      _isLoading = true;
       _loadingProgress = 0.0;
       _loadingStatus = 'Preparing network check...';
       _errorMessage = null;
@@ -194,8 +204,8 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
 
       setState(() {
         _networkInfo = info;
-        _isLoading = false;
       });
+      _setLoading(false);
 
       print('=== Network check complete ===');
     } catch (e) {
@@ -205,9 +215,9 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
 
       setState(() {
         _errorMessage = 'Error gathering network info: $e';
-        _isLoading = false;
         _loadingProgress = 0.0;
       });
+      _setLoading(false);
     }
   }
 
@@ -330,11 +340,9 @@ class NetworkCheckerTabState extends State<NetworkCheckerTab>
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return Scaffold(
-        body: NetworkLoadingIndicator(
-          progress: _loadingProgress,
-          statusText: _loadingStatus,
-        ),
+      return NetworkLoadingIndicator(
+        progress: _loadingProgress,
+        statusText: _loadingStatus,
       );
     }
 

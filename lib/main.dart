@@ -69,6 +69,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final GlobalKey<NetworkCheckerTabState> _networkCheckerKey = GlobalKey();
   bool _isInitialized = false;
+  bool _isLoading = false; // Track loading state from child
 
   // Track the last brightness to detect changes
   Brightness? _lastBrightness;
@@ -136,6 +137,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _handleLoadingChanged(bool isLoading) {
+    setState(() {
+      _isLoading = isLoading;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -147,50 +154,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       backgroundColor: theme.colorScheme.surface,
       // CRITICAL: Use a unique key based on theme to force rebuild
       key: ValueKey('home_${theme.brightness}'),
-      body: NestedScrollView(
-        // CRITICAL: Also give NestedScrollView a key
-        key: ValueKey('nested_${theme.brightness}'),
-        headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 120.0,
-              floating: false,
-              pinned: true,
-              backgroundColor: theme.colorScheme.surface,
-              foregroundColor: theme.colorScheme.onSurface,
-              flexibleSpace: FlexibleSpaceBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'NETRIX',
-                        style: TextStyle(
-                          fontFamily: AppTheme.displayFont,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: theme.colorScheme.onPrimaryContainer,
+      body: _isLoading
+          ? NetworkCheckerTab(
+              key: _networkCheckerKey,
+              onLoadingChanged: _handleLoadingChanged,
+            )
+          : NestedScrollView(
+              // CRITICAL: Also give NestedScrollView a key
+              key: ValueKey('nested_${theme.brightness}'),
+              headerSliverBuilder:
+                  (BuildContext context, bool innerBoxIsScrolled) {
+                    return [
+                      SliverAppBar(
+                        expandedHeight: 120.0,
+                        floating: false,
+                        pinned: true,
+                        backgroundColor: theme.colorScheme.surface,
+                        foregroundColor: theme.colorScheme.onSurface,
+                        flexibleSpace: FlexibleSpaceBar(
+                          title: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                child: Text(
+                                  'Netrix',
+                                  style: TextStyle(
+                                    fontFamily: AppTheme.displayFont,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 2,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          titlePadding: const EdgeInsets.only(
+                            left: 16,
+                            bottom: 16,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                titlePadding: const EdgeInsets.only(left: 16, bottom: 16),
+                    ];
+                  },
+              body: NetworkCheckerTab(
+                key: _networkCheckerKey,
+                onLoadingChanged: _handleLoadingChanged,
               ),
             ),
-          ];
-        },
-        body: NetworkCheckerTab(key: _networkCheckerKey),
-      ),
     );
   }
 }

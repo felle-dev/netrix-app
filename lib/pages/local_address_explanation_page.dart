@@ -12,12 +12,6 @@ class LocalAddressExplanationPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Icon(
-            Icons.devices_rounded,
-            size: 64,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(height: 24),
           Text(
             'What are local addresses?',
             style: theme.textTheme.titleLarge?.copyWith(
@@ -95,5 +89,4 @@ class LocalAddressExplanationPage extends StatelessWidget {
       ),
     );
   }
-
 }
